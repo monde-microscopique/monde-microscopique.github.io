@@ -26,9 +26,13 @@ Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de
 - **Brume d'électrons des métaux.** C'est une couche à part, dessinée après les ions : de nombreuses taches floues et translucides qui dérivent lentement, sans contour net et sans écrire la profondeur, si bien qu'aucune ne se lit comme une bille. En 2D : des dégradés transparents. Le zoom multi-échelle sert tel quel pour le fil de cuivre.
 - **Scènes de population.** Elles ne peuvent pas être calculées depuis le temps comme une chorégraphie : chaque choc dépend des précédents. Le moteur les fera avancer à pas de temps fixe, avec un tirage aléatoire reproductible : même graine, même suite de chocs, même courbe, à chaque lecture et sur chaque appareil. Le générateur existe déjà (il fixe les phases de vibration). Pour le retour en arrière, l'état est enregistré à intervalles réguliers ; revenir à un instant revient à repartir de l'enregistrement le plus proche et à recalculer jusqu'à cet instant. La courbe de concentration vient de la même simulation, donc elle correspond toujours à ce qui est montré. Les positions changent à chaque image : le tampon est réécrit, ce qui reste léger pour quelques centaines de particules, en 3D comme en 2D.
 
+## Décisions de Roger du 15.11.2026 pour le temps 2
+
+- Cortège de Na⁺ : distance Na⁺–O environ 240 pm, 6 molécules d'eau en octaèdre, oxygène vers l'ion.
+- Cortège de Cl⁻ : distance Cl⁻–H environ 230 pm, liaison hydrogène quasi linéaire Cl⁻···H–O, 6 molécules en pseudo-octaèdre (simplification assumée).
+- Le cube de 216 ions est présenté comme « un cristal minuscule à la place du grain ».
+- Couleur de Cl : #1E9E1E validée.
+
 ## Questions ouvertes pour Roger
 
-1. Temps 2 : distances ion–eau du cortège (proposition : Na⁺–O environ 240 pm, Cl⁻–O environ 320 pm, de mémoire, non vérifié) et disposition des 6 molécules (octaèdre) ?
-2. Temps 2 : le cube de 216 ions est-il présenté comme « un cristal minuscule à la place du grain » ?
-3. Couleur de Cl : vert assombri (#1E9E1E) au lieu du vert usuel, trop pâle sur fond clair : d'accord ?
-4. Choix listés dans le panneau « À contrôler par Roger » de la scène.
+- Retour sur le temps 1 (zoom) : voir le panneau « À contrôler par Roger » et `docs/tester-une-scene.md`.

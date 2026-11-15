@@ -16,6 +16,10 @@ Voir la chimie à l'échelle des particules : un monde à explorer, toujours le 
 
 Voir [docs/modifier-un-texte.md](docs/modifier-un-texte.md). En bref : en mode brouillon, cliquer sur le crayon ✎ à côté d'un texte, corriger, puis « Commit changes ». Le site se met à jour en deux minutes environ. Si le fichier est abîmé, la publication est refusée et le site garde la version précédente.
 
+## Tester une scène
+
+Voir [docs/tester-une-scene.md](docs/tester-une-scene.md) : où tester, comment se servir de la scène, la grille de relecture, et comment transmettre un retour.
+
 ## Statut des scènes
 
 Une scène est `brouillon` ou `validee` dans `scenes/catalogue.json`. Seules les scènes `validee` apparaissent sur la page publique. L'avancement et les questions ouvertes sont dans [AVANCEMENT.md](AVANCEMENT.md).
