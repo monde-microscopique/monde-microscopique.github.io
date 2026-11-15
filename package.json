@@ -1,0 +1,18 @@
+{
+  "name": "monde-microscopique",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monde microscopique : visualisations de chimie pour l'EPIC Monthey",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "construire": "node outils/construire.mjs",
+    "test": "node tests/unitaires.mjs",
+    "test:navigateur": "node tests/navigateur.mjs",
+    "verifier": "node outils/construire.mjs && node tests/unitaires.mjs && node tests/navigateur.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright-core": "^1.50.0"
+  }
+}

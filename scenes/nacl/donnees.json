@@ -1,0 +1,68 @@
+{
+  "id": "nacl",
+  "fiche": "monde-micro-fiche-scene-nacl.md (validée par Roger le 15.11.2026)",
+  "type": "B",
+  "mode": "structure",
+  "chapitre": "Milieu aqueux (chap. 8)",
+
+  "especes": {
+    "Na+": {
+      "element": "Na",
+      "charge": 1,
+      "rayon_pm": 102,
+      "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
+      "couleur": "#AB5CF2",
+      "etiquette": "Na⁺"
+    },
+    "Cl-": {
+      "element": "Cl",
+      "charge": -1,
+      "rayon_pm": 181,
+      "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
+      "couleur": "#1E9E1E",
+      "etiquette": "Cl⁻"
+    }
+  },
+
+  "reseau": {
+    "structure": "NaCl (cubique à faces centrées, coordinence 6)",
+    "arete_maille_pm": 564,
+    "source_arete": "fiche NaCl §4 (à contrôler CRM)",
+    "ions_par_arete": 6,
+    "ion_au_coin": "Cl-",
+    "voisins_attendus": 6
+  },
+
+  "grain": {
+    "arete_m": 3e-4,
+    "masse_volumique_g_cm3": 2.17,
+    "masse_molaire_g_mol": 58.44
+  },
+
+  "affichage": {
+    "facteur_reduction": 0.28,
+    "vibration_pm": 20,
+    "fond": "#F7F6F2",
+    "fond_capture": "#FFFFFF"
+  },
+
+  "echelle": {
+    "regle_max_m": 0.1,
+    "regle_min_m": 1e-10
+  },
+
+  "temps1": {
+    "etapes": [
+      { "id": "question-1", "type": "question", "texte": "question-1", "largeur_m": 1.2e-3 },
+      { "id": "zoom", "type": "zoom", "titre": "etape-zoom", "depart_m": 0.1, "min_m": 3e-10, "max_m": 0.1, "fin_lecture_m": 2e-9 },
+      { "id": "reseau", "type": "exploration", "titre": "etape-reseau", "largeur_m": 2e-9, "min_m": 3e-10, "max_m": 2.2e-9 }
+    ],
+    "messages": [
+      { "de_m": 0.1, "a_m": 4e-3, "texte": "message-saliere" },
+      { "de_m": 4e-3, "a_m": 1.5e-5, "texte": "message-grain" },
+      { "de_m": 1.5e-5, "a_m": 1.5e-8, "texte": "message-empilement" },
+      { "de_m": 1.5e-8, "a_m": 2.5e-9, "texte": "message-motif" },
+      { "de_m": 2.5e-9, "a_m": 1e-10, "texte": "message-ions" }
+    ]
+  }
+}

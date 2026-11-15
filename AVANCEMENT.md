@@ -1,0 +1,34 @@
+# Avancement
+
+Mis à jour le 15 novembre 2026. Documents de référence (projet EPIC) : `monde-micro-protocole-execution.md`, `monde-micro-dossier-de-conception.md` (v0.3), `monde-micro-fiche-scene-nacl.md` (v0.2).
+
+## Scènes
+
+| Scène | Statut | Fait | Reste |
+|---|---|---|---|
+| NaCl — du grain de sel aux ions | brouillon | Temps 1 : question 1, zoom continu de 10 cm à 300 pm, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles), capture sur fond blanc | Temps 2 (dissolution), équation, niveau avancé, suivre une particule, fichier HTML unique |
+
+## Livraisons
+
+1. **J1a — le zoom, seul (en relecture).** C'est le point le plus risqué du projet : il est livré en premier. À relire : https://monde-microscopique.github.io/?brouillon#nacl
+2. J1b — la dissolution (temps 2).
+3. J1c — finitions : niveau avancé, suivre une particule, fichier HTML unique de repli, réglages de fluidité sur téléphone réel.
+
+## Contrôles automatiques
+
+À chaque envoi : 33 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, textes) et 31 contrôles dans Chrome (critères d'acceptation 1 à 8 de la fiche, accueil, mode brouillon, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+
+Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
+
+## Le moteur couvre-t-il le reste du catalogue ?
+
+- **Étiquettes et bâtons de liaison.** Les étiquettes sur les boules existent déjà (Na⁺, Cl⁻), en 3D et en 2D, cachées correctement par les boules placées devant. Les bâtons des liaisons covalentes utilisent le même principe que les sphères : un rectangle tourné vers l'écran, ombré comme un cylindre, dessiné avec le même facteur de réduction (dossier §3). En 2D, ce sont des traits ombrés. Aucun bâton entre ions : c'est une règle des données, contrôlée automatiquement.
+- **Brume d'électrons des métaux.** C'est une couche à part, dessinée après les ions : de nombreuses taches floues et translucides qui dérivent lentement, sans contour net et sans écrire la profondeur, si bien qu'aucune ne se lit comme une bille. En 2D : des dégradés transparents. Le zoom multi-échelle sert tel quel pour le fil de cuivre.
+- **Scènes de population.** Elles ne peuvent pas être calculées depuis le temps comme une chorégraphie : chaque choc dépend des précédents. Le moteur les fera avancer à pas de temps fixe, avec un tirage aléatoire reproductible : même graine, même suite de chocs, même courbe, à chaque lecture et sur chaque appareil. Le générateur existe déjà (il fixe les phases de vibration). Pour le retour en arrière, l'état est enregistré à intervalles réguliers ; revenir à un instant revient à repartir de l'enregistrement le plus proche et à recalculer jusqu'à cet instant. La courbe de concentration vient de la même simulation, donc elle correspond toujours à ce qui est montré. Les positions changent à chaque image : le tampon est réécrit, ce qui reste léger pour quelques centaines de particules, en 3D comme en 2D.
+
+## Questions ouvertes pour Roger
+
+1. Temps 2 : distances ion–eau du cortège (proposition : Na⁺–O environ 240 pm, Cl⁻–O environ 320 pm, de mémoire, non vérifié) et disposition des 6 molécules (octaèdre) ?
+2. Temps 2 : le cube de 216 ions est-il présenté comme « un cristal minuscule à la place du grain » ?
+3. Couleur de Cl : vert assombri (#1E9E1E) au lieu du vert usuel, trop pâle sur fond clair : d'accord ?
+4. Choix listés dans le panneau « À contrôler par Roger » de la scène.

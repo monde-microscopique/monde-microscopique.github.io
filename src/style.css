@@ -1,0 +1,137 @@
+/* Monde microscopique — styles. Fond clair (projection en salle éclairée), sobriété. */
+:root {
+  --fond: #F7F6F2;
+  --texte: #1d1d1f;
+  --discret: #5f5f66;
+  --trait: #d6d3cb;
+  --accent: #1f4e9e;
+  --rouge: #b02a1f;
+  --panneau: #ffffff;
+  --rayon: 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--texte);
+  background: var(--fond);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--fond); -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent); }
+.chargement, .non-publiee { padding: 2rem; font-size: 1.1rem; }
+.crayon { text-decoration: none; font-size: 0.85em; opacity: 0.75; padding: 0 0.2em; }
+.crayon:hover { opacity: 1; }
+
+/* Accueil */
+.accueil { max-width: 760px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
+.accueil h1 { font-size: 2rem; margin: 0.2rem 0; }
+.sous-titre { color: var(--discret); margin-top: 0.2rem; }
+.liste-scenes { list-style: none; padding: 0; display: grid; gap: 0.8rem; }
+.carte-scene { display: grid; gap: 0.25rem; padding: 1rem 1.2rem; background: #fff; border: 1px solid var(--trait); border-radius: var(--rayon); text-decoration: none; color: inherit; }
+.carte-scene:hover, .carte-scene:focus-visible { border-color: var(--accent); }
+.titre-scene { font-size: 1.2rem; font-weight: 600; }
+.sous-titre-scene { color: var(--discret); }
+.meta { font-size: 0.85rem; color: var(--discret); display: flex; gap: 0.6rem; align-items: center; }
+.etiquette-brouillon { background: #fff2cc; border: 1px solid #e0c060; border-radius: 4px; padding: 0 0.4rem; color: #6b5200; }
+.vide { color: var(--discret); }
+.pied { margin-top: 3rem; font-size: 0.8rem; color: var(--discret); }
+.bandeau-brouillon { background: #fff2cc; border-bottom: 1px solid #e0c060; color: #5c4600; padding: 0.35rem 0.8rem; font-size: 0.9rem; text-align: center; }
+.accueil .bandeau-brouillon { border: 1px solid #e0c060; border-radius: 6px; margin-bottom: 1rem; }
+
+/* Scène */
+.page-scene { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.page-scene > .vue { flex: 1 1 auto; }
+.barre-haut { display: flex; align-items: center; gap: 0.8rem; padding: 0.4rem 0.7rem; border-bottom: 1px solid var(--trait); flex-wrap: wrap; }
+.lien-accueil { text-decoration: none; white-space: nowrap; }
+.titre-scene-barre { flex: 1 1 auto; min-width: 10rem; display: flex; flex-direction: column; line-height: 1.25; }
+.titre-etape { color: var(--discret); font-size: 0.9rem; }
+.commandes { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+.bouton { min-height: 44px; padding: 0.4rem 0.9rem; border-radius: 8px; border: 1px solid var(--trait); background: #fff; cursor: pointer; }
+.bouton:hover:not(:disabled) { border-color: var(--accent); }
+.bouton:disabled { opacity: 0.4; cursor: default; }
+.bouton-principal { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.pastilles { display: flex; gap: 0.25rem; }
+.pastille { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--trait); background: #fff; cursor: pointer; font-size: 0.85rem; }
+.pastille[aria-current="step"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.vue { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--fond); min-height: 240px; }
+.couche { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.couche-gl { pointer-events: none; }
+.erreur-webgl { position: absolute; bottom: 0.6rem; left: 50%; transform: translateX(-50%); background: #fff; border: 1px solid var(--trait); color: var(--discret); font-size: 0.8rem; padding: 0.3rem 0.7rem; border-radius: 6px; z-index: 5; max-width: 70%; pointer-events: none; }
+
+.message { position: absolute; top: 0.8rem; left: 50%; transform: translateX(-50%); max-width: min(560px, 70%); background: rgba(255,255,255,0.92); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 0.55rem 0.9rem; font-size: 1.05rem; text-align: center; transition: opacity 0.4s; pointer-events: auto; }
+.message.vide { opacity: 0; pointer-events: none; }
+.message .aide { font-size: 0.88rem; color: var(--discret); }
+
+.encart { position: absolute; top: 0.8rem; left: 0.8rem; width: 170px; background: rgba(255,255,255,0.9); border: 1px solid var(--trait); border-radius: var(--rayon); overflow: hidden; }
+.encart-canvas { display: block; width: 100%; height: 120px; }
+.encart-legende { font-size: 0.78rem; color: var(--discret); text-align: center; padding: 0.15rem 0 0.3rem; }
+
+.compteurs { position: absolute; left: 0.8rem; bottom: 4.2rem; background: rgba(255,255,255,0.94); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 0.5rem 0.8rem; font-size: 1rem; display: grid; gap: 0.2rem; }
+.compteurs[hidden] { display: none; }
+.puce { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; margin-right: 0.4em; vertical-align: -0.05em; }
+
+.regle { position: absolute; right: 0.4rem; top: 0.8rem; bottom: 4.2rem; width: 132px; cursor: ns-resize; touch-action: none; }
+/* De gauche à droite : valeur « vous êtes ici », rail, graduations. */
+.regle-rail { position: absolute; right: 58px; top: 8px; bottom: 8px; width: 4px; background: #bdb9b0; border-radius: 2px; }
+.graduation { position: absolute; left: -5px; width: 14px; height: 0; border-top: 2px solid #8d897f; }
+.graduation span { position: absolute; left: 18px; top: -0.62em; font-size: 0.72rem; color: var(--discret); white-space: nowrap; }
+.regle-repere { position: absolute; right: 58px; transform: translateY(-50%); display: flex; flex-direction: column; align-items: flex-end; pointer-events: none; margin-top: 8px; }
+.regle-repere::after { content: ""; position: absolute; right: -10px; top: 50%; margin-top: -1px; width: 24px; height: 0; border-top: 3px solid var(--rouge); }
+.regle-valeur { background: var(--rouge); color: #fff; font-weight: 600; font-size: 0.85rem; padding: 0.1rem 0.4rem; border-radius: 4px; margin-right: 16px; white-space: nowrap; }
+.regle-ici { font-size: 0.68rem; color: var(--rouge); margin-right: 16px; white-space: nowrap; }
+
+.barre-echelle { position: absolute; left: 0.8rem; bottom: 0.8rem; pointer-events: none; }
+.barre-trait { height: 5px; background: #222; border-radius: 1px; }
+.barre-texte { font-size: 0.9rem; margin-top: 0.15rem; font-weight: 600; }
+
+.question { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(247,246,242,0.55); padding: 1rem; gap: 0.6rem; }
+.question[hidden] { display: none; }
+.question-texte { background: #fff; border: 2px solid var(--accent); border-radius: var(--rayon); padding: 1rem 1.3rem; font-size: clamp(1.1rem, 2.4vw, 1.6rem); max-width: 720px; text-align: center; margin: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+.question-note { font-size: 0.85rem; color: var(--discret); background: rgba(255,255,255,0.85); padding: 0.2rem 0.6rem; border-radius: 6px; margin: 0; }
+
+.barre-bas { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; padding: 0.4rem 0.7rem; border-top: 1px solid var(--trait); flex-wrap: wrap; }
+.interrupteurs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.inter { min-height: 44px; padding: 0.3rem 0.85rem; border-radius: 22px; border: 1px solid var(--trait); background: #fff; cursor: pointer; }
+.inter[aria-pressed="true"] { background: #e3ecfa; border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.inter[aria-pressed="true"]::before { content: "✓ "; }
+.panneaux-boutons { display: flex; gap: 0.8rem; }
+.bouton-lien { background: none; border: none; color: var(--accent); text-decoration: underline; cursor: pointer; min-height: 44px; }
+.bouton-lien.controle { color: #6b5200; }
+
+.panneau { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--panneau); border-left: 1px solid var(--trait); box-shadow: -8px 0 30px rgba(0,0,0,0.08); padding: 1rem 1.2rem 2rem; overflow-y: auto; z-index: 20; }
+.panneau[hidden] { display: none; }
+.panneau .fermer { position: absolute; top: 0.4rem; right: 0.6rem; font-size: 1.8rem; background: none; border: none; cursor: pointer; min-width: 44px; min-height: 44px; }
+.panneau h2 { margin-top: 0.3rem; font-size: 1.2rem; }
+.panneau table { border-collapse: collapse; font-size: 0.85rem; width: 100%; margin: 0.5rem 0; }
+.panneau th, .panneau td { border: 1px solid var(--trait); padding: 0.25rem 0.4rem; text-align: left; vertical-align: top; }
+.panneau .technique { font-size: 0.8rem; color: var(--discret); }
+
+.fige .vue { cursor: default; }
+
+@media (max-width: 640px) {
+  .barre-haut { gap: 0.3rem 0.5rem; padding: 0.3rem 0.5rem; }
+  .titre-scene-barre { min-width: 0; flex-basis: 100%; font-size: 0.95rem; }
+  .titre-etape { display: none; }
+  .lien-accueil { display: none; }
+  .commandes { width: 100%; justify-content: space-between; gap: 0.3rem; }
+  .bouton { padding: 0.25rem 0.55rem; min-height: 40px; font-size: 0.9rem; }
+  .pastille { width: 30px; height: 30px; }
+  .mot { display: none; }
+  .encart { width: 104px; top: 0.4rem; left: 0.4rem; }
+  .encart-canvas { height: 72px; }
+  .encart-legende { font-size: 0.68rem; }
+  .message { top: auto; bottom: 2.6rem; max-width: 70%; left: 0.5rem; transform: none; font-size: 0.85rem; padding: 0.35rem 0.6rem; text-align: left; }
+  .regle { width: 100px; right: 0; top: 0.4rem; bottom: 0.6rem; }
+  .regle-rail, .regle-repere { right: 44px; }
+  .graduation span { font-size: 0.6rem; left: 12px; }
+  .regle-ici { display: none; }
+  .regle-valeur { font-size: 0.75rem; margin-right: 12px; }
+  .compteurs { bottom: auto; top: 6.2rem; left: 0.4rem; font-size: 0.85rem; padding: 0.35rem 0.6rem; }
+  .barre-bas { padding: 0.3rem 0.4rem; gap: 0.2rem; }
+  .interrupteurs { flex-wrap: nowrap; overflow-x: auto; width: 100%; }
+  .inter { min-height: 38px; padding: 0.2rem 0.65rem; font-size: 0.88rem; white-space: nowrap; }
+  .panneaux-boutons { width: 100%; justify-content: space-between; }
+  .bouton-lien { min-height: 32px; font-size: 0.85rem; }
+  .bandeau-brouillon { font-size: 0.78rem; padding: 0.2rem 0.5rem; }
+  .question-texte { font-size: 1.05rem; }
+}

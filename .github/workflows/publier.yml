@@ -1,0 +1,47 @@
+# Construction, contrôles automatiques, puis publication sur GitHub Pages.
+# Si une étape échoue, rien n'est publié : le site garde sa version précédente.
+name: Publier
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construire-et-controler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Construire (vérifie les textes et les données)
+        run: npm run construire
+      - name: Contrôles sans navigateur
+        run: npm test
+      - name: Contrôles dans Chrome (critères d'acceptation)
+        run: npm run test:navigateur
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publier:
+    needs: construire-et-controler
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4
