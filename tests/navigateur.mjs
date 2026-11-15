@@ -70,7 +70,8 @@ try {
   let regleOk = true, barreOk = true, detail = '';
   for (const W of [0.1, 0.02, 3e-3, 4e-4, 5e-5, 6e-6, 7e-7, 8e-8, 9e-9, 3e-9, 1e-9, 4e-10]) {
     await page.evaluate((W) => window.__monde.scene.definirLargeur(W), W);
-    await page.waitForTimeout(60);
+    // Attendre deux images dessinées : la caméra, la règle et la barre sont mises à jour dans la même image.
+    await page.evaluate(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))));
     const r = await page.evaluate(() => {
       const s = window.__monde.scene;
       const barre = document.querySelector('.barre-trait').getBoundingClientRect().width;
@@ -78,6 +79,9 @@ try {
       const vue = document.querySelector('.vue').getBoundingClientRect().width;
       return { W: s.camera.largeur, barre, texte, vue, valeur: document.querySelector('.regle-valeur').textContent };
     });
+    const [nv, uv] = r.valeur.split(' ');
+    const fv = { cm: 1e-2, mm: 1e-3, 'µm': 1e-6, nm: 1e-9, pm: 1e-12 }[uv];
+    if (Math.abs(parseFloat(nv.replace(',', '.')) * fv - r.W) / r.W > 0.05) { regleOk = false; detail = JSON.stringify(r); }
     const [n, u] = r.texte.split(' ');
     const f = { cm: 1e-2, mm: 1e-3, 'µm': 1e-6, nm: 1e-9, pm: 1e-12 }[u];
     const longueur = parseFloat(n.replace(',', '.')) * f;
