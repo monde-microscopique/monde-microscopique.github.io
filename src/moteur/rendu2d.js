@@ -54,6 +54,10 @@ export class Rendu2D {
     return lot;
   }
 
+  definirBoite(min, max, teinte = [0.25, 0.45, 0.85, 0.13]) {
+    this.boite = min ? { min, max, teinte } : null;
+  }
+
   creerAtlas() { /* inutile en 2D : le texte est dessiné directement */ }
 
   creerEtiquettes(items) {
@@ -134,6 +138,24 @@ export class Rendu2D {
         ctx.strokeText(et.texte, p.x, p.y);
         ctx.fillStyle = '#fff';
         ctx.fillText(et.texte, p.x, p.y);
+      }
+    }
+    // Maille : faces translucides dessinées par-dessus (approximation du rendu 3D), sans trait.
+    if (this.boite) {
+      const { min, max, teinte } = this.boite;
+      const P = [];
+      for (const z of [min[2], max[2]]) for (const y of [min[1], max[1]]) for (const x of [min[0], max[0]]) {
+        const dx = x - cx, dy = y - cy, dz = z - cz;
+        P.push([l / 2 + (dx * droite[0] + dy * droite[1] + dz * droite[2]) * k, h / 2 - (dx * haut[0] + dy * haut[1] + dz * haut[2]) * k]);
+      }
+      const faces = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]];
+      ctx.fillStyle = `rgb(${teinte.slice(0, 3).map((v) => Math.round(v * 255)).join(',')})`;
+      ctx.globalAlpha = teinte[3];
+      for (const f of faces) {
+        ctx.beginPath();
+        f.forEach((i, n) => (n ? ctx.lineTo(P[i][0], P[i][1]) : ctx.moveTo(P[i][0], P[i][1])));
+        ctx.closePath();
+        ctx.fill();
       }
     }
     ctx.globalAlpha = 1;

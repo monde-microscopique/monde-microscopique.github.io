@@ -6,16 +6,18 @@ import { scalaire, normaliser } from '../../moteur/vec.js';
 
 export function creerDecor(L) {
   const r = aleatoire(17);
-  const grains = [{ centre: [L / 2, -L / 2, L / 2], taille: L, angle: 0, cible: true }];
-  // Quelques grains renversés autour du grain étudié (positions fixes, tirées une fois pour toutes).
+  const grains = [{ centre: [L / 2, -L / 2, L / 2], taille: L, angle: 0, cible: true, marches: true }];
+  // Grains renversés autour du grain étudié (positions fixes) : un petit tas proche, d'autres plus loin.
   const places = [
-    [-2.2e-3, 1.6e-3], [3.1e-3, -1.2e-3], [1.4e-3, 4.2e-3], [-4.6e-3, -2.8e-3], [6.5e-3, 3.4e-3],
+    [0.95e-3, -0.55e-3], [-0.75e-3, 0.8e-3], [1.6e-3, 1.15e-3], [-1.45e-3, -1.0e-3], [0.45e-3, 1.7e-3],
+    [2.35e-3, -0.15e-3], [-0.3e-3, -1.75e-3], [-2.4e-3, 0.55e-3], [1.9e-3, -1.9e-3], [-1.9e-3, 2.0e-3],
+    [-2.2e-3, 1.6e-3 + 3e-3], [3.1e-3, -1.2e-3 - 2e-3], [1.4e-3, 4.2e-3], [-4.6e-3, -2.8e-3], [6.5e-3, 3.4e-3],
     [-7.5e-3, 5.1e-3], [9.0e-3, -4.0e-3], [-1.1e-2, -6.5e-3], [4.0e-3, 9.5e-3], [-3.5e-3, 1.05e-2],
     [1.25e-2, 6.0e-3], [-1.45e-2, 1.2e-3], [-2.2e-2, 1.6e-2], [-1.6e-2, 2.6e-2], [-3.0e-2, 1.2e-2],
   ];
   for (const [x, z] of places) {
     const s = L * (0.65 + 0.7 * r());
-    grains.push({ centre: [x, -L + s / 2, z], taille: s, angle: r() * Math.PI / 2 });
+    grains.push({ centre: [x, -L + s / 2, z], taille: s, angle: r() * Math.PI / 2, marches: r() < 0.45 });
   }
   return {
     L,
@@ -24,8 +26,39 @@ export function creerDecor(L) {
     // Point visé au départ du zoom (champ de 10 cm) : salière et grains dans le cadre.
     centreVue: [-1.0e-2, 1.6e-2, 1.4e-2],
     table: { y: -L, x0: -0.16, x1: 0.12, z0: -0.09, z1: 0.18 },
+    texture: TEXTURE,
   };
 }
+
+// Texture du grain étudié, de 1 mm à 12 nm (fiche NaCl v0.3, tableau du zoom).
+// Marches : distance (m) du bord de chaque face ; chaque marche forme un carré concentrique sur la face.
+// Ordres de grandeur de mémoire, à contrôler (panneau « à contrôler »).
+const TEXTURE = {
+  marches: [
+    { p: [85e-6, 60e-6, 32e-6], trait: 1.6, couleur: '120,136,152' },                           // marches concentriques (100× à 400×)
+    { p: [22e-6, 14e-6, 9e-6, 5.5e-6, 3.4e-6, 2.1e-6, 1.3e-6], trait: 1.3, couleur: '120,136,152' }, // marches de quelques µm (1000×)
+    { p: [800e-9, 500e-9, 310e-9, 190e-9, 120e-9, 75e-9], trait: 1.1, couleur: '112,128,146' },    // marches fines (microscope électronique)
+    { p: [52e-9, 38e-9, 27e-9, 19e-9, 13.5e-9], trait: 1.0, couleur: '70,92,118', uneCouche: true }, // marches d'une couche d'ions (282 pm)
+  ],
+  // Bulles de saumure prises dans le cristal : face, position (u, v) depuis le coin, taille (m).
+  bulles: [
+    ['dessus', 120e-6, 85e-6, 13e-6], ['dessus', 205e-6, 160e-6, 7e-6], ['dessus', 95e-6, 225e-6, 10e-6], ['dessus', 240e-6, 60e-6, 5e-6],
+    ['devant', 150e-6, 110e-6, 11e-6], ['devant', 230e-6, 210e-6, 6e-6], ['devant', 70e-6, 190e-6, 8e-6],
+    ['gauche', 130e-6, 150e-6, 9e-6], ['gauche', 220e-6, 75e-6, 12e-6],
+  ],
+  // Rayures fines : face, (u1, v1) → (u2, v2).
+  rayures: [
+    ['dessus', 40e-6, 18e-6, 160e-6, 70e-6], ['dessus', 12e-6, 5e-6, 34e-6, 26e-6], ['devant', 30e-6, 90e-6, 140e-6, 40e-6],
+    ['gauche', 25e-6, 40e-6, 120e-6, 150e-6],
+  ],
+};
+
+// Repère de chaque face visible du grain étudié : origine au coin, axes u et v le long des arêtes.
+const FACES_CIBLE = {
+  dessus: { u: [1, 0, 0], v: [0, 0, 1] },
+  devant: { u: [1, 0, 0], v: [0, -1, 0] },
+  gauche: { u: [0, 0, 1], v: [0, -1, 0] },
+};
 
 const LUMIERE = normaliser([-0.35, 0.85, -0.4]);
 
@@ -115,26 +148,53 @@ export function dessinerMacro(ctx, camera, decor, options = {}) {
   for (const o of objets) {
     if (o.type === 'saliere') { dessinerSaliere(ctx, camera, s); continue; }
     const g = o.g;
-    // Grain trop petit à l'écran : un point suffit.
     const taillePx = g.taille * k;
     if (taillePx < 0.6) continue;
     const pts = sommetsCube(g).map((p) => camera.projeter(p));
     const alpha = g.cible ? opaciteFaces : 1;
     if (alpha <= 0.002) continue;
     ctx.globalAlpha = alpha;
-    for (const f of FACES) {
+    const visibles = [];
+    // Arêtes de l'arrière, vues à travers le cristal transparent.
+    if (taillePx > 6) {
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = 'rgba(120,136,152,0.45)';
+      for (const f of FACES) {
+        const n = tournerNormale(f.n, g.angle);
+        if (scalaire(n, camera.base.avant) < 0) { visibles.push(f); continue; }
+        const poly = decouper(f.s.map((i) => pts[i]), bx0, by0, bx1, by1);
+        if (poly.length >= 3) { tracer(ctx, poly); ctx.stroke(); }
+      }
+    } else {
+      for (const f of FACES) if (scalaire(tournerNormale(f.n, g.angle), camera.base.avant) < 0) visibles.push(f);
+    }
+    for (const f of visibles) {
       const n = tournerNormale(f.n, g.angle);
-      if (scalaire(n, camera.base.avant) >= 0) continue; // face cachée
-      const poly = decouper(f.s.map((i) => pts[i]), bx0, by0, bx1, by1);
+      const coins = f.s.map((i) => pts[i]);
+      const poly = decouper(coins, bx0, by0, bx1, by1);
       if (poly.length < 3) continue;
-      // Grains blancs, faces légèrement ombrées, arêtes nettes : ils ressortent sur le fond bleuté.
+      // Grains blancs, faces légèrement ombrées, un peu transparents ; arêtes nettes.
       const e = 0.88 + 0.12 * Math.max(0, scalaire(n, LUMIERE));
       tracer(ctx, poly);
       ctx.fillStyle = teinte([255, 255, 255], e);
+      ctx.globalAlpha = alpha * (g.cible ? 0.97 : 0.86);
       ctx.fill();
+      ctx.globalAlpha = alpha;
+      // Marches concentriques sur les faces (grains « en trémie »), vues aux grossissements du microscope.
+      if (g.marches && !g.cible && taillePx > 40) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(120,136,152,0.55)';
+        for (const kf of [0.72, 0.5, 0.3]) traitsCarre(ctx, coins, kf, bx0, by0, bx1, by1);
+      }
+      if (taillePx > 40) { // arête émoussée : reflet clair sous le trait
+        ctx.lineWidth = Math.min(5, taillePx / 60);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        tracer(ctx, poly); ctx.stroke();
+      }
       ctx.lineWidth = taillePx > 40 ? 1.5 : 0.8;
       ctx.strokeStyle = 'rgba(96,112,130,0.9)';
-      ctx.stroke();
+      tracer(ctx, poly); ctx.stroke();
+      if (g.cible) dessinerTexture(ctx, camera, decor, f, coins, alpha, bx0, by0, bx1, by1);
     }
     ctx.globalAlpha = 1;
     // Repère autour du grain étudié tant qu'il est petit à l'écran.
@@ -147,6 +207,76 @@ export function dessinerMacro(ctx, camera, decor, options = {}) {
       ctx.restore();
     }
   }
+}
+
+// Coupe d'un segment par un rectangle (Liang–Barsky). Renvoie null si le segment est hors du cadre.
+function couperSegment(a, b, x0, y0, x1, y1) {
+  let t0 = 0, t1 = 1;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  for (const [p, q] of [[-dx, a.x - x0], [dx, x1 - a.x], [-dy, a.y - y0], [dy, y1 - a.y]]) {
+    if (p === 0) { if (q < 0) return null; continue; }
+    const t = q / p;
+    if (p < 0) { if (t > t1) return null; if (t > t0) t0 = t; } else { if (t < t0) return null; if (t < t1) t1 = t; }
+  }
+  return [{ x: a.x + t0 * dx, y: a.y + t0 * dy }, { x: a.x + t1 * dx, y: a.y + t1 * dy }];
+}
+
+function traitSegment(ctx, a, b, x0, y0, x1, y1) {
+  const c = couperSegment(a, b, x0, y0, x1, y1);
+  if (!c) return;
+  ctx.beginPath(); ctx.moveTo(c[0].x, c[0].y); ctx.lineTo(c[1].x, c[1].y); ctx.stroke();
+}
+
+// Carré concentrique de rapport k (projection orthographique : l'homothétie se fait à l'écran).
+function traitsCarre(ctx, coins, k, x0, y0, x1, y1) {
+  const cx = (coins[0].x + coins[2].x) / 2, cy = (coins[0].y + coins[2].y) / 2;
+  const q = coins.map((p) => ({ x: cx + (p.x - cx) * k, y: cy + (p.y - cy) * k }));
+  for (let i = 0; i < 4; i++) traitSegment(ctx, q[i], q[(i + 1) % 4], x0, y0, x1, y1);
+}
+
+// Texture du grain étudié sur une face visible : marches, bulles, rayures.
+function dessinerTexture(ctx, camera, decor, face, coins, alpha, x0, y0, x1, y1) {
+  const L = decor.L;
+  const k = camera.pxParMetre;
+  const T = decor.texture;
+  // Marches : carrés concentriques à la distance p du bord ; une marche trop près du bord à l'écran s'efface.
+  for (const groupe of T.marches) {
+    ctx.lineWidth = groupe.trait;
+    for (const p of groupe.p) {
+      const px = p * k;
+      const o = alpha * lisseLocal(3, 14, px);
+      if (o < 0.01) continue;
+      ctx.strokeStyle = `rgba(${groupe.couleur},${(0.8 * o).toFixed(3)})`;
+      traitsCarre(ctx, coins, (L / 2 - p) / (L / 2), x0, y0, x1, y1);
+    }
+  }
+  // Bulles et rayures : seulement sur les trois faces qui se rejoignent au coin étudié.
+  const nom = face.n[0] === -1 ? 'gauche' : face.n[1] === 1 ? 'dessus' : face.n[2] === -1 ? 'devant' : null;
+  if (!nom) return;
+  const rep = FACES_CIBLE[nom];
+  const point = (u, v) => camera.projeter([rep.u[0] * u + rep.v[0] * v, rep.u[1] * u + rep.v[1] * v, rep.u[2] * u + rep.v[2] * v]);
+  for (const [f, u, v, t] of T.bulles) {
+    if (f !== nom || t * k < 2) continue;
+    const q = [point(u - t / 2, v - t / 2), point(u + t / 2, v - t / 2), point(u + t / 2, v + t / 2), point(u - t / 2, v + t / 2)];
+    if (q.every((p) => p.x < x0 || p.x > x1) || q.every((p) => p.y < y0 || p.y > y1)) continue;
+    tracer(ctx, q);
+    ctx.fillStyle = `rgba(170,188,206,${0.55 * alpha})`;
+    ctx.fill();
+    ctx.lineWidth = Math.max(1, Math.min(3, t * k * 0.08));
+    ctx.strokeStyle = `rgba(70,86,104,${0.8 * alpha})`;
+    ctx.stroke();
+  }
+  ctx.lineWidth = 0.9;
+  ctx.strokeStyle = `rgba(140,154,170,${0.6 * alpha})`;
+  for (const [f, u1, v1, u2, v2] of T.rayures) {
+    if (f !== nom) continue;
+    traitSegment(ctx, point(u1, v1), point(u2, v2), x0, y0, x1, y1);
+  }
+}
+
+function lisseLocal(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }
 
 function dessinerSaliere(ctx, camera, s) {

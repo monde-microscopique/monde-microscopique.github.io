@@ -6,7 +6,7 @@ Mis à jour le 15 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 | Scène | Statut | Fait | Reste |
 |---|---|---|---|
-| NaCl — du grain de sel aux ions | brouillon | Temps 1 : question 1, zoom continu de 10 cm à 300 pm, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles), capture sur fond blanc | Temps 2 (dissolution), équation, niveau avancé, suivre une particule, fichier HTML unique |
+| NaCl — du grain de sel aux ions | brouillon | Temps 1 : question 1, zoom texturé de 10 cm à 300 pm avec instruments, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles, maille), zoom dans l'ion jusqu'au noyau (Bohr / nuage), capture sur fond blanc | Temps 2 (dissolution), équation, niveau avancé, suivre une particule, fichier HTML unique |
 
 ## Livraisons
 
@@ -35,4 +35,7 @@ Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de
 
 ## Questions ouvertes pour Roger
 
-- Retour sur le temps 1 (zoom) : voir le panneau « À contrôler par Roger » et `docs/tester-une-scene.md`.
+- Isotope du chlore pour le noyau de Cl⁻ (provisoire : ³⁵Cl).
+- Électrons du schéma de Bohr répartis régulièrement ou par paires (provisoire : régulièrement).
+- Formulation du « vide » en avancé, où le nuage reste visible.
+- Retour sur le temps 1 : voir le panneau « À contrôler par Roger » et `docs/tester-une-scene.md`.

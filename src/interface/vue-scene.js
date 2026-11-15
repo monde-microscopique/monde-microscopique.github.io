@@ -13,6 +13,9 @@ const INTERRUPTEURS = [
   { nom: 'voisins', cle: 'inter-voisins', touche: 'v' },
   { nom: 'compteurs', cle: 'inter-compteurs', touche: 'c' },
   { nom: 'tailles', cle: 'inter-tailles', touche: 't' },
+  { nom: 'maille', cle: 'inter-maille', touche: 'm' },
+  { nom: 'ion', cle: 'inter-ion', touche: 'i' },
+  { nom: 'avance', cle: 'inter-avance', touche: 'a' },
 ];
 
 export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScene, sousEtape) {
@@ -23,17 +26,19 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   // ------------------------------------------------------------ structure DOM
   const canvasMacro = el('canvas', { class: 'couche couche-macro', 'aria-hidden': 'true' });
   const canvasGl = el('canvas', { class: 'couche couche-gl', 'aria-hidden': 'true' });
+  const canvasAtome = el('canvas', { class: 'couche couche-atome', 'aria-hidden': 'true' });
   const message = el('div', { class: 'message', 'aria-live': 'polite' });
   const compteurs = el('div', { class: 'compteurs', hidden: true });
   const encartCanvas = el('canvas', { class: 'encart-canvas' });
   const encartLegende = el('div', { class: 'encart-legende' });
   const encart = el('div', { class: 'encart' }, encartCanvas, encartLegende);
   const regleRepere = el('div', { class: 'regle-repere' }, el('span', { class: 'regle-valeur' }), el('span', { class: 'regle-ici' }, textes.brut('regle-ici')));
+  const instrument = el('div', { class: 'instrument', 'aria-live': 'polite' });
   const regleRail = el('div', { class: 'regle-rail' });
   const regle = el('div', { class: 'regle', role: 'slider', tabindex: '0', 'aria-label': 'Échelle : largeur du champ visible' }, regleRail, regleRepere);
   const barre = el('div', { class: 'barre-echelle' }, el('div', { class: 'barre-trait' }), el('div', { class: 'barre-texte' }));
   const question = el('div', { class: 'question', hidden: true });
-  const vue = el('div', { class: 'vue' }, canvasMacro, canvasGl, encart, message, compteurs, regle, barre, question);
+  const vue = el('div', { class: 'vue' }, canvasMacro, canvasGl, canvasAtome, encart, message, compteurs, regle, instrument, barre, question);
 
   const btnPrec = el('button', { class: 'bouton', type: 'button', 'aria-label': textes.brut('bouton-precedent') }, '◀', el('span', { class: 'mot' }, ' ' + textes.brut('bouton-precedent')));
   const btnSuiv = el('button', { class: 'bouton', type: 'button', 'aria-label': textes.brut('bouton-suivant') }, el('span', { class: 'mot' }, textes.brut('bouton-suivant') + ' '), '▶');
@@ -88,16 +93,30 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       vue.prepend(T('webgl-absent', { class: 'erreur-webgl' }, 'div'));
     }
   }
-  const scene = new ClasseScene(infos.donnees, rendu, canvasMacro.getContext('2d'));
+  const scene = new ClasseScene(infos.donnees, rendu, canvasMacro.getContext('2d'), canvasAtome.getContext('2d'));
   const ech = infos.donnees.echelle;
   vue.style.background = infos.donnees.affichage.fond;
 
-  // Règle : graduations d'une décade à l'autre.
-  const lmax = Math.log10(ech.regle_max_m), lmin = Math.log10(ech.regle_min_m);
+  // Règle : graduations d'une décade à l'autre. Elle descend jusqu'à 1 fm avec le zoom dans l'ion.
+  const lmax = Math.log10(ech.regle_max_m);
+  let lmin = Math.log10(ech.regle_min_m);
   const fraction = (m) => (lmax - Math.log10(m)) / (lmax - lmin);
-  for (const g of graduations(ech.regle_max_m, ech.regle_min_m)) {
-    regleRail.append(el('div', { class: 'graduation', style: `top:${fraction(g) * 100}%` }, el('span', {}, ecrireLongueur(g, 1))));
+  let regleIon = null;
+  function construireRegle() {
+    const ion = scene.etat.inter.ion;
+    if (ion === regleIon) return;
+    regleIon = ion;
+    const min = ion ? ech.regle_min_ion_m : ech.regle_min_m;
+    lmin = Math.log10(min);
+    regleRail.querySelectorAll('.graduation').forEach((g) => g.remove());
+    const pas = ion ? 2 : 1; // une graduation toutes les deux décades quand la règle est longue
+    graduations(ech.regle_max_m, min).forEach((g, i) => {
+      const fin = Math.abs(Math.log10(g) - lmin) < 1e-9;
+      if (i % pas && !fin) return;
+      regleRail.append(el('div', { class: 'graduation', style: `top:${fraction(g) * 100}%` }, el('span', {}, ecrireLongueur(g, 1))));
+    });
   }
+  construireRegle();
 
   // Pastilles d'étapes
   scene.etapes.forEach((e, i) => {
@@ -162,7 +181,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   }
 
   for (const i of INTERRUPTEURS) {
-    boutonsInter[i.nom].addEventListener('click', () => { scene.basculer(i.nom); majInterrupteurs(); });
+    boutonsInter[i.nom].addEventListener('click', () => { scene.basculer(i.nom); majInterrupteurs(); construireRegle(); });
   }
   btnPrec.addEventListener('click', () => { scene.allerEtape(scene.etat.etape - 1); majEtape(); });
   btnSuiv.addEventListener('click', () => { scene.allerEtape(scene.etat.etape + 1); majEtape(); });
@@ -238,7 +257,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     else if (k === 'Escape') fermerPanneau();
     else {
       const i = INTERRUPTEURS.find((x) => x.touche === k.toLowerCase());
-      if (i && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { scene.basculer(i.nom); majInterrupteurs(); } else traite = false;
+      if (i && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { scene.basculer(i.nom); majInterrupteurs(); construireRegle(); } else traite = false;
     }
     if (traite) ev.preventDefault();
   };
@@ -253,6 +272,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     ecran = { l: Math.max(1, r.width), h: Math.max(1, r.height), dpr };
     canvasMacro.width = Math.round(ecran.l * dpr);
     canvasMacro.height = Math.round(ecran.h * dpr);
+    canvasAtome.width = canvasMacro.width;
+    canvasAtome.height = canvasMacro.height;
     if (rendu) rendu.redimensionner(ecran.l, ecran.h, dpr);
     const er = encartCanvas.getBoundingClientRect();
     encartCanvas.width = Math.round(er.width * dpr);
@@ -274,15 +295,23 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const b = barreEchelle(W);
     barre.querySelector('.barre-trait').style.width = `${b.fraction * ecran.l}px`;
     barre.querySelector('.barre-texte').textContent = ecrireLongueur(b.longueur, 1);
+    // Instrument
+    const cleInstr = scene.instrument();
+    if (cleInstr !== instrument.dataset.cle) {
+      instrument.dataset.cle = cleInstr || '';
+      instrument.innerHTML = '';
+      if (cleInstr) instrument.append(T(cleInstr));
+    }
     // Message
     let cle = scene.message();
-    if (scene.etape.type === 'exploration') cle = 'coin-du-grain';
+    if (!cle && scene.etape.type === 'exploration') cle = scene.etat.inter.maille ? 'aide-maille' : 'coin-du-grain';
     if (cle !== derniereCle) {
       derniereCle = cle;
       message.innerHTML = '';
       if (cle) {
         message.append(T(cle, {}, 'span'));
         if (cle === 'coin-du-grain') message.append(el('br'), T('aide-reseau', { class: 'aide' }));
+        if (cle === 'aide-maille') message.append(el('br'), T('aide-reseau', { class: 'aide' }));
       }
       message.classList.toggle('vide', !cle);
     }
@@ -305,6 +334,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     encartLegende.textContent = grand ? 'salière' : 'grain de sel';
   }
 
+  const texteRepere = textes.brut('repere-noyau', id);
   let precedent = performance.now();
   let actif = true;
   function boucle(t) {
@@ -312,14 +342,14 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const dt = Math.min(0.1, (t - precedent) / 1000);
     precedent = t;
     scene.avancer(dt);
-    scene.dessiner(ecran);
+    scene.dessiner(ecran, { texteRepere });
     majHabillage();
     requestAnimationFrame(boucle);
   }
 
   function capturer() {
     // Rendu sur fond blanc, à la résolution de l'écran, avec la barre d'échelle.
-    scene.dessiner(ecran, { fondCapture: infos.donnees.affichage.fond_capture });
+    scene.dessiner(ecran, { fondCapture: infos.donnees.affichage.fond_capture, texteRepere });
     const c = document.createElement('canvas');
     c.width = canvasMacro.width; c.height = canvasMacro.height;
     const ctx = c.getContext('2d');
@@ -327,6 +357,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     ctx.fillRect(0, 0, c.width, c.height);
     ctx.drawImage(canvasMacro, 0, 0);
     if (rendu) { ctx.globalAlpha = Number(canvasGl.style.opacity || 1); ctx.drawImage(canvasGl, 0, 0); ctx.globalAlpha = 1; }
+    ctx.globalAlpha = Number(canvasAtome.style.opacity || 0); ctx.drawImage(canvasAtome, 0, 0); ctx.globalAlpha = 1;
     const dpr = ecran.dpr;
     const b = barreEchelle(scene.etat.largeur);
     const x0 = 24 * dpr, y0 = c.height - 28 * dpr, w = b.fraction * ecran.l * dpr;

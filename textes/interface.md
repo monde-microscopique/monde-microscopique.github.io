@@ -66,6 +66,15 @@ Compteurs
 ## inter-tailles
 Tailles réelles
 
+## inter-maille
+Maille
+
+## inter-ion
+Zoom dans l'ion
+
+## inter-avance
+Avancé
+
 ## compteur-charge
 Charge totale
 
@@ -73,7 +82,7 @@ Charge totale
 vous êtes ici
 
 ## aide-clavier
-Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles.
+Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles, M maille, I zoom dans l'ion, A avancé.
 
 ## webgl-absent
 La 3D est désactivée sur cet appareil : affichage simplifié en 2D.

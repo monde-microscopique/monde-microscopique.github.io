@@ -106,6 +106,22 @@ void main() {
   gl_FragColor = t * k; // texture déjà prémultipliée
 }`;
 
+// Volume translucide (maille) : faces teintées, aucun trait.
+const VS_BOITE = `
+attribute vec3 aPos;
+uniform vec3 uDroite, uHaut, uAvant, uCentre;
+uniform float uEchelle, uProf;
+uniform vec2 uEcran;
+void main() {
+  vec3 d = aPos - uCentre;
+  vec2 p = vec2(dot(d, uDroite), dot(d, uHaut)) * uEchelle;
+  gl_Position = vec4(p * 2.0 / uEcran, dot(d, uAvant) / uProf, 1.0);
+}`;
+const FS_BOITE = `
+precision mediump float;
+uniform vec4 uTeinte;
+void main() { gl_FragColor = vec4(uTeinte.rgb * uTeinte.a, uTeinte.a); }`;
+
 function compiler(gl, type, source) {
   const s = gl.createShader(type);
   gl.shaderSource(s, source);
@@ -208,9 +224,27 @@ export class Rendu {
     this.profondeurExacte = !!ext;
     this.prSphere = programme(gl, VS_SPHERE, FS_SPHERE(!!ext));
     this.prEtiq = programme(gl, VS_ETIQ, FS_ETIQ);
+    this.prBoite = programme(gl, VS_BOITE, FS_BOITE);
+    this.boite = null;
     this.lots = [];
     this.etiquettes = null;
     this.atlas = null;
+  }
+
+  // Boîte (min, max en pm) dessinée en volume translucide, ou null pour l'effacer.
+  definirBoite(min, max, teinte = [0.25, 0.45, 0.85, 0.13]) {
+    const gl = this.gl;
+    if (!min) { this.boite = null; return; }
+    const [x0, y0, z0] = min, [x1, y1, z1] = max;
+    const P = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
+    const faces = [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 3, 7, 4], [1, 2, 6, 5]];
+    const d = [];
+    for (const f of faces) for (const i of [0, 1, 2, 0, 2, 3]) d.push(...P[f[i]]);
+    if (!this.boite) this.boite = { tampon: gl.createBuffer() };
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.boite.tampon);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(d), gl.STATIC_DRAW);
+    this.boite.n = d.length / 3;
+    this.boite.teinte = teinte;
   }
 
   creerLot(spheres) {
@@ -351,6 +385,27 @@ export class Rendu {
       gl.drawElements(gl.TRIANGLES, lot.n * 6, gl.UNSIGNED_SHORT, 0);
     }
     for (const k of Object.values(a)) gl.disableVertexAttribArray(k);
+
+    if (this.boite) {
+      const pb = this.prBoite;
+      gl.useProgram(pb.p);
+      const u = pb.uniformes;
+      gl.uniform3fv(u.uDroite, vue.base.droite);
+      gl.uniform3fv(u.uHaut, vue.base.haut);
+      gl.uniform3fv(u.uAvant, vue.base.avant);
+      gl.uniform3fv(u.uCentre, vue.centrePm);
+      gl.uniform1f(u.uEchelle, vue.pxParPm);
+      gl.uniform1f(u.uProf, vue.profondeurPm);
+      gl.uniform2f(u.uEcran, this.ecran.l, this.ecran.h);
+      gl.uniform4fv(u.uTeinte, this.boite.teinte);
+      gl.depthMask(false);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.boite.tampon);
+      gl.enableVertexAttribArray(pb.attributs.aPos);
+      gl.vertexAttribPointer(pb.attributs.aPos, 3, gl.FLOAT, false, 12, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, this.boite.n);
+      gl.disableVertexAttribArray(pb.attributs.aPos);
+      gl.depthMask(true);
+    }
 
     const e = this.etiquettes;
     if (e && vue.opaciteEtiquettes > 0.01) {

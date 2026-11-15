@@ -6,6 +6,7 @@ const UNITES = [
   { m: 1e-6, nom: 'µm' },
   { m: 1e-9, nom: 'nm' },
   { m: 1e-12, nom: 'pm' },
+  { m: 1e-15, nom: 'fm' },
 ];
 
 // Écrit une longueur (en mètres) avec l'unité la plus lisible : 0,0003 → « 300 µm ».

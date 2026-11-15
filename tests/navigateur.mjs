@@ -119,17 +119,17 @@ try {
   for (const i of [0, 1, 2]) {
     await page.evaluate((i) => { window.__monde.scene.allerEtape(i); }, i);
     await page.locator('.pastille').nth(i).click();
-    for (const [touche, nom] of [['e', 'etiquettes'], ['v', 'voisins'], ['c', 'compteurs'], ['t', 'tailles']]) {
+    for (const [touche, nom] of [['e', 'etiquettes'], ['v', 'voisins'], ['c', 'compteurs'], ['t', 'tailles'], ['m', 'maille'], ['i', 'ion'], ['a', 'avance']]) {
       const avant = (await etat()).inter[nom];
       await page.keyboard.press(touche);
       await page.waitForTimeout(40);
       const apres = (await etat()).inter[nom];
-      const bouton = await page.locator('.inter').nth(['etiquettes', 'voisins', 'compteurs', 'tailles'].indexOf(nom)).getAttribute('aria-pressed');
+      const bouton = await page.locator('.inter').nth(['etiquettes', 'voisins', 'compteurs', 'tailles', 'maille', 'ion', 'avance'].indexOf(nom)).getAttribute('aria-pressed');
       if (apres === avant || bouton !== String(apres)) interOk = false;
       await page.keyboard.press(touche);
     }
   }
-  verifier('les 4 interrupteurs fonctionnent aux 3 étapes (clavier et état des boutons)', interOk);
+  verifier('les 7 interrupteurs fonctionnent aux 3 étapes (clavier et état des boutons)', interOk);
   await page.locator('.pastille').nth(2).click();
   await page.keyboard.press('c');
   const compteurs = await page.locator('.compteurs').innerText();
@@ -161,6 +161,18 @@ try {
   await page.mouse.click(cible.x, cible.y);
   const sel = await etat();
   verifier('exploration : un clic sur un ion le sélectionne et allume ses voisins', sel.inter.voisins && sel.selection === cible.i, JSON.stringify({ cible, selection: sel.selection, voisins: sel.inter.voisins }));
+
+  // Zoom dans l'ion
+  await page.keyboard.press('i');
+  await page.evaluate(() => window.__monde.scene.definirLargeur(3e-14));
+  await page.waitForTimeout(900);
+  const ionEtat = await page.evaluate(() => ({ W: window.__monde.scene.etat.largeur, regle: [...document.querySelectorAll('.graduation span')].map((x) => x.textContent).at(-1), message: document.querySelector('.message').textContent, opacite: document.querySelector('.couche-atome').style.opacity }));
+  verifier('zoom dans l\'ion : on descend sous 300 pm', ionEtat.W === 3e-14, JSON.stringify(ionEtat));
+  verifier('zoom dans l\'ion : la règle va jusqu\'à 1 fm', ionEtat.regle === '1 fm', ionEtat.regle);
+  verifier('zoom dans l\'ion : message sur le noyau', /noyau/.test(ionEtat.message), ionEtat.message);
+  await page.keyboard.press('i');
+  verifier('interrupteur coupé : retour à 300 pm', (await etat()).largeur === 3e-10);
+  await page.evaluate(() => window.__monde.scene.definirLargeur(2e-9));
 
   // Critère 8 : capture sur fond blanc.
   const [telechargement] = await Promise.all([page.waitForEvent('download'), page.locator('button', { hasText: 'Capture' }).click()]);

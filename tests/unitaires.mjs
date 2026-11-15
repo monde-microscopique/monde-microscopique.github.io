@@ -101,6 +101,40 @@ verifier('faces du grain encore pleines à 7 nm', scene.fondus(7e-9).faces > 0.9
 const msgs = d.temps1.messages;
 verifier('messages de zoom contigus de 10 cm à 100 pm', msgs.every((m, i) => i === 0 || m.de_m === msgs[i - 1].a_m) && msgs[0].de_m === 0.1 && msgs.at(-1).a_m <= 1e-10);
 
+console.log('Zoom dans l\'ion et maille');
+for (const [nom, e] of Object.entries(d.especes)) {
+  const electrons = e.noyau.protons - e.charge;
+  verifier(`${nom} : électrons du schéma de Bohr = protons − charge (${electrons})`, e.couches.reduce((a, b) => a + b, 0) === electrons);
+  const A = e.noyau.protons + e.noyau.neutrons;
+  verifier(`${nom} : rayon du noyau ≈ 1,2 × A^(1/3) fm (A = ${A})`, proche(e.noyau.rayon_fm, 1.2 * A ** (1 / 3), 0.1));
+}
+verifier('Na⁺ : 11 protons, 12 neutrons (²³Na)', d.especes['Na+'].noyau.protons === 11 && d.especes['Na+'].noyau.neutrons === 12);
+verifier('Cl⁻ : 17 protons', d.especes['Cl-'].noyau.protons === 17);
+verifier('1 fm s\'écrit « 1 fm »', ecrireLongueur(1e-15) === '1 fm', ecrireLongueur(1e-15));
+verifier('0,5 pm s\'écrit « 500 fm »', ecrireLongueur(5e-13) === '500 fm', ecrireLongueur(5e-13));
+const sceneIon = new SceneNaCl(d, null, null);
+sceneIon.allerEtape(2);
+sceneIon.basculer('ion');
+sceneIon.etat.fonduIon = 1;
+let continuIon = true, pireIon = 0, precIon = null;
+for (let e = -1; e >= -15; e -= 0.001) {
+  const W = 10 ** e, c = sceneIon.centrePour(W);
+  if (precIon) { const saut = norme(soustraire(c, precIon)) / W; pireIon = Math.max(pireIon, saut); if (saut > 0.02) continuIon = false; }
+  precIon = c;
+}
+verifier('zoom dans l\'ion : trajectoire continue jusqu\'à 1 fm', continuIon, `pire saut : ${(pireIon * 100).toFixed(2)} % du champ`);
+const cIon = sceneIon.centrePour(1e-15), pIon = sceneIon.centreIonSelectionne();
+verifier('à 1 fm, la vue est centrée sur le noyau de l\'ion sélectionné', norme(soustraire(cIon, pIon)) < 1e-18);
+sceneIon.definirLargeur(1e-16);
+verifier('avec l\'interrupteur, le zoom descend jusqu\'à 1 fm (pas plus)', sceneIon.etat.largeur === 1e-15);
+sceneIon.basculer('ion');
+verifier('sans l\'interrupteur, retour à 300 pm', sceneIon.etat.largeur === 3e-10);
+const ma = sceneIon.maille;
+verifier('maille : 27 positions d\'ions', ma.membres.size === 27);
+const sommets = [...ma.membres].map((i) => sceneIon.cristal[i]).filter((x) => [x.i, x.j, x.k].every((v, q) => v === ma.depart[q] || v === ma.depart[q] + 2));
+verifier('maille : 8 sommets, tous Cl⁻', sommets.length === 8 && sommets.every((x) => x.espece === 'Cl-'));
+verifier('maille : arête de 564 pm', proche(ma.max[0] - ma.min[0], 564, 1e-9) && proche(ma.max[1] - ma.min[1], 564, 1e-9) && proche(ma.max[2] - ma.min[2], 564, 1e-9));
+
 console.log('Textes');
 let refuse = false;
 try { lireTextes('## bon-titre\nTexte\n## titre abîmé\nTexte', 'essai.md'); } catch { refuse = true; }

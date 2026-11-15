@@ -4,16 +4,18 @@
 import { Camera } from '../../moteur/camera.js';
 import { baseDepuisVisee, interpolerBase, tourner, melanger, lisse, borner, couleurRvb, scalaire, soustraire } from '../../moteur/vec.js';
 import { genererCristal, genererSurface, voisins, bilan, aleatoire } from './reseau.js';
-import { creerDecor, dessinerMacro, dessinerRepere } from './macro.js';
+import { creerDecor, dessinerMacro } from './macro.js';
+import { dessinerAtome, fondusAtome } from './atome.js';
 
 const PM = 1e-12;
 const log10 = Math.log10;
 
 export class SceneNaCl {
-  constructor(donnees, rendu, ctxMacro) {
+  constructor(donnees, rendu, ctxMacro, ctxAtome = null) {
     this.d = donnees;
     this.rendu = rendu;
     this.ctxMacro = ctxMacro;
+    this.ctxAtome = ctxAtome;
     this.camera = new Camera();
     this.baseDepart = baseDepuisVisee([0.38, -0.42, 1]);
     this.camera.base = this.baseDepart;
@@ -53,10 +55,13 @@ export class SceneNaCl {
       largeur: this.etapes[0].largeur_m,
       temps: 0,
       lecture: false,
-      inter: { etiquettes: false, voisins: false, compteurs: false, tailles: false },
+      inter: { etiquettes: false, voisins: false, compteurs: false, tailles: false, maille: false, ion: false, avance: false },
+      fonduIon: 0,
       selection: this.cristal.findIndex((ion) => ion.i === 2 && ion.j === 2 && ion.k === 2),
       retourBase: null,
     };
+    // Maille : cube de 564 pm (3 ions par arête), ion Cl⁻ aux sommets (fiche v0.3).
+    this.maille = this.calculerMaille();
     this.fonduSurface = -1;
     this.majEtatsCristal();
   }
@@ -77,24 +82,27 @@ export class SceneNaCl {
       this.camera.base = this.baseDepart;
     } else if (e.type === 'zoom') {
       if (precedent.type === 'question') this.etat.largeur = e.depart_m;
-      this.etat.largeur = borner(this.etat.largeur, e.min_m, e.max_m);
+      this.etat.largeur = borner(this.etat.largeur, this.minimum, e.max_m);
       if (precedent.type === 'exploration') this.etat.retourBase = { de: this.camera.base, t: 0 };
     } else if (e.type === 'exploration') {
-      if (this.etat.largeur > e.max_m || this.etat.largeur < 1e-9) this.etat.largeur = e.largeur_m;
+      if (this.etat.largeur > e.max_m || (this.etat.largeur < 1e-9 && !this.etat.inter.ion)) this.etat.largeur = e.largeur_m;
     }
   }
 
   // Facteur > 1 : on s'éloigne ; < 1 : on s'approche.
+  // Limite basse du zoom : 300 pm, ou 1 fm quand l'interrupteur « zoom dans l'ion » est activé.
+  get minimum() {
+    return this.etat.inter.ion ? this.d.echelle.regle_min_ion_m : this.etape.min_m;
+  }
+
   zoomer(facteur) {
     if (this.fige) return;
-    const e = this.etape;
-    this.etat.largeur = borner(this.etat.largeur * facteur, e.min_m, e.max_m);
+    this.etat.largeur = borner(this.etat.largeur * facteur, this.minimum, this.etape.max_m);
   }
 
   definirLargeur(m) {
     if (this.fige) return;
-    const e = this.etape;
-    this.etat.largeur = borner(m, e.min_m, e.max_m);
+    this.etat.largeur = borner(m, this.minimum, this.etape.max_m);
   }
 
   basculerLecture() {
@@ -105,6 +113,8 @@ export class SceneNaCl {
 
   basculer(nom) {
     this.etat.inter[nom] = !this.etat.inter[nom];
+    // Sans le zoom dans l'ion, on remonte à la limite habituelle (300 pm).
+    if (nom === 'ion' && !this.etat.inter.ion && !this.fige) this.etat.largeur = Math.max(this.etat.largeur, this.etape.min_m);
     this.majEtatsCristal();
   }
 
@@ -145,13 +155,37 @@ export class SceneNaCl {
     return this.etat.inter.tailles ? 1 : this.d.affichage.facteur_reduction;
   }
 
+  // Maille choisie près du centre du cristal : indices de départ dont l'ion est l'espèce demandée aux sommets.
+  calculerMaille() {
+    const n = this.d.reseau.ions_par_arete;
+    const sommet = 'Cl-';
+    const depart = [1, 2].map((a) => [a, a, a]).find(([i, j, k]) => {
+      const ion = this.cristal.find((x) => x.i === i && x.j === j && x.k === k);
+      return ion && ion.espece === sommet && i + 2 < n;
+    });
+    const [i0, j0, k0] = depart;
+    const membres = new Set();
+    this.cristal.forEach((x, idx) => {
+      if (x.i >= i0 && x.i <= i0 + 2 && x.j >= j0 && x.j <= j0 + 2 && x.k >= k0 && x.k <= k0 + 2) membres.add(idx);
+    });
+    const d = this.demiArete;
+    const a = [i0 * d, -j0 * d, k0 * d], b = [(i0 + 2) * d, -(j0 + 2) * d, (k0 + 2) * d];
+    return { depart, membres, min: a.map((v, q) => Math.min(v, b[q])), max: a.map((v, q) => Math.max(v, b[q])), sommet };
+  }
+
   majEtatsCristal() {
     if (!this.lotCristal) return;
     const sel = this.etat.selection;
     const proches = new Set([sel, ...this.voisins[sel]]);
     const v = this.etat.inter.voisins;
-    this.lotCristal.definirEtats(this.cristal.map((_, i) => [0, v && !proches.has(i) ? 0.78 : 0, v && i === sel ? 1 : 0]));
-    this.rendu.fondreEtiquettes(this.cristal.map((_, i) => (v && !proches.has(i) ? 0.8 : 0)));
+    const m = this.etat.inter.maille;
+    const attenuation = (i) => (m && !this.maille.membres.has(i) ? 0.88 : v && !proches.has(i) ? 0.78 : 0);
+    const ion = this.etat.inter.ion;
+    const fb = this.fonduBoule || 0;
+    this.lotCristal.definirEtats(this.cristal.map((_, i) => [i === sel ? fb : 0, attenuation(i), (v || ion) && i === sel && fb < 0.5 ? 1 : 0]));
+    this.rendu.fondreEtiquettes(this.cristal.map((_, i) => Math.max(attenuation(i) ? 0.85 : 0, i === sel ? fb : 0)));
+    if (m) this.rendu.definirBoite(this.maille.min, this.maille.max);
+    else this.rendu.definirBoite(null);
   }
 
   // ------------------------------------------------------------------- caméra
@@ -169,7 +203,23 @@ export class SceneNaCl {
       c = melanger([0, 0, 0], grain, W / 1e-3);
     }
     const cristal = this.centreCristalPm.map((v) => v * PM);
-    return melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
+    c = melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
+    // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration.
+    const fi = this.etat.fonduIon * lisse(log10(6e-10), log10(2.5e-10), lw);
+    if (fi > 0) c = melanger(c, this.centreIonSelectionne(), fi);
+    return c;
+  }
+
+  // Position (m) de l'ion sélectionné, vibration comprise (même formule que le rendu).
+  centreIonSelectionne() {
+    const s = this.spheresCristal[this.etat.selection];
+    const t = this.etat.temps * (this.d.affichage.vitesse_vibration ?? 1);
+    const A = this.d.affichage.vibration_pm;
+    return [
+      (s.pos[0] + A * Math.sin(t * 5.1 + s.phase[0])) * PM,
+      (s.pos[1] + A * Math.sin(t * 4.3 + s.phase[1])) * PM,
+      (s.pos[2] + A * Math.sin(t * 5.9 + s.phase[2])) * PM,
+    ];
   }
 
   // Grandeurs de fondu entre représentations, selon la largeur du champ.
@@ -187,6 +237,11 @@ export class SceneNaCl {
   avancer(dt) {
     const e = this.etape;
     if (!this.fige) this.etat.temps += dt;
+    const cibleIon = this.etat.inter.ion ? 1 : 0;
+    if (this.etat.fonduIon !== cibleIon) {
+      const pas = dt / 0.6;
+      this.etat.fonduIon = cibleIon > this.etat.fonduIon ? Math.min(1, this.etat.fonduIon + pas) : Math.max(0, this.etat.fonduIon - pas);
+    }
     if (this.etat.lecture && e.type === 'zoom') {
       // Vitesse logarithmique constante : environ 40 s de 10 cm à 2 nm.
       const decades = log10(e.depart_m) - log10(e.fin_lecture_m);
@@ -218,11 +273,30 @@ export class SceneNaCl {
     if (options.fondCapture) { ctx.fillStyle = options.fondCapture; ctx.fillRect(0, 0, ecran.l, ecran.h); }
     if (f.faces > 0.001 || c.largeur > 1e-8) dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
 
-    // Couche WebGL : rien à dessiner tant que les ions ne sont pas visibles.
+    // Zoom dans l'ion : la boule de l'ion sélectionné s'efface, le schéma (ou le nuage) prend le relais.
+    const fa = fondusAtome(c.largeur);
+    const fb = this.etat.fonduIon > 0 ? (1 - fa.boule) * this.etat.fonduIon : 0;
+    if (Math.abs(fb - (this.fonduBoule || 0)) > 0.01 || (fb === 0 && this.fonduBoule)) { this.fonduBoule = fb; this.majEtatsCristal(); }
+    const ca = this.ctxAtome;
+    if (ca) {
+      ca.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ca.clearRect(0, 0, ecran.l, ecran.h);
+      ca.canvas.style.opacity = String(this.etat.fonduIon);
+      if (this.etat.fonduIon > 0 && c.largeur < 6e-10) {
+        const ion = this.cristal[this.etat.selection];
+        const esp = this.d.especes[ion.espece];
+        dessinerAtome(ca, c, { centre: this.centreIonSelectionne(), rayonAffiche: esp.rayon_pm * PM * this.facteurTaille, espece: esp },
+          { avance: this.etat.inter.avance, texteRepere: options.texteRepere || 'noyau' });
+      }
+    }
+
+    // Couche WebGL : rien à dessiner tant que les ions ne sont pas visibles, ni au cœur de l'ion
+    // (en dessous de 150 pm, la précision du calcul graphique ne suffit plus ; la couche 2D prend le relais).
     const r = this.rendu;
     if (!r) return;
-    r.canvas.style.opacity = String(f.ions);
-    if (f.ions < 0.002) return;
+    const visibleGl = c.largeur > 1.5e-10 ? f.ions : 0;
+    r.canvas.style.opacity = String(visibleGl);
+    if (visibleGl < 0.002) return;
     this.majFonduSurface(f.surface);
     const fond = couleurRvb(options.fondCapture || this.d.affichage.fond);
     r.dessiner({
@@ -251,10 +325,20 @@ export class SceneNaCl {
   // Message à afficher selon la largeur du champ (étape de zoom seulement).
   message() {
     const e = this.etape;
-    if (e.type === 'exploration') return null;
-    if (e.type !== 'zoom') return null;
     const W = this.etat.largeur;
+    if (this.etat.inter.ion && W < 3e-10 * 1.0001) {
+      const m = this.d.temps1.messages_ion.find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
+      if (m) return this.etat.inter.avance ? m.texte_avance : m.texte;
+    }
+    if (e.type !== 'zoom') return null;
     const m = this.d.temps1.messages.find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
+    return m ? m.texte : null;
+  }
+
+  // Instrument capable de montrer l'image à cette échelle (affiché sous la règle).
+  instrument() {
+    const W = this.etat.largeur;
+    const m = (this.d.temps1.instruments || []).find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
     return m ? m.texte : null;
   }
 
