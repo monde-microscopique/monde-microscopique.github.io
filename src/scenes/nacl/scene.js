@@ -216,7 +216,7 @@ export class SceneNaCl {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ecran.l, ecran.h);
     if (options.fondCapture) { ctx.fillStyle = options.fondCapture; ctx.fillRect(0, 0, ecran.l, ecran.h); }
-    if (f.faces > 0.001 || c.largeur > 1e-8) dessinerMacro(ctx, c, this.decor, { opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
+    if (f.faces > 0.001 || c.largeur > 1e-8) dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
 
     // Couche WebGL : rien à dessiner tant que les ions ne sont pas visibles.
     const r = this.rendu;
@@ -229,7 +229,7 @@ export class SceneNaCl {
       base: c.base,
       centrePm: c.centre.map((v) => v / PM),
       pxParPm: c.pxParMetre * PM,
-      temps: this.etat.temps,
+      temps: this.etat.temps * (this.d.affichage.vitesse_vibration ?? 1),
       amp: this.d.affichage.vibration_pm,
       facteur: this.facteurTaille,
       fond,

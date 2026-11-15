@@ -127,12 +127,13 @@ export function dessinerMacro(ctx, camera, decor, options = {}) {
       if (scalaire(n, camera.base.avant) >= 0) continue; // face cachée
       const poly = decouper(f.s.map((i) => pts[i]), bx0, by0, bx1, by1);
       if (poly.length < 3) continue;
-      const e = 0.8 + 0.2 * Math.max(0, scalaire(n, LUMIERE));
+      // Grains blancs, faces légèrement ombrées, arêtes nettes : ils ressortent sur le fond bleuté.
+      const e = 0.88 + 0.12 * Math.max(0, scalaire(n, LUMIERE));
       tracer(ctx, poly);
-      ctx.fillStyle = teinte([252, 251, 248], e);
+      ctx.fillStyle = teinte([255, 255, 255], e);
       ctx.fill();
-      ctx.lineWidth = taillePx > 40 ? 1.2 : 0.6;
-      ctx.strokeStyle = 'rgba(150,146,138,0.85)';
+      ctx.lineWidth = taillePx > 40 ? 1.5 : 0.8;
+      ctx.strokeStyle = 'rgba(96,112,130,0.9)';
       ctx.stroke();
     }
     ctx.globalAlpha = 1;

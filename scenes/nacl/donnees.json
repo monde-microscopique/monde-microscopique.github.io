@@ -41,8 +41,10 @@
 
   "affichage": {
     "facteur_reduction": 0.28,
-    "vibration_pm": 20,
-    "fond": "#F7F6F2",
+    "vibration_pm": 10,
+    "vitesse_vibration": 0.45,
+    "fond": "#E2E9F0",
+    "couleur_support": "#CBD6E1",
     "fond_capture": "#FFFFFF"
   },
 

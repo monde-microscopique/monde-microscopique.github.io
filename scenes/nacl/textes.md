@@ -47,6 +47,6 @@ Fais tourner le cristal (glisser). Clique sur un ion pour voir ses voisins.
 ## simplifications
 - Les ions ne sont pas des billes dures et n'ont pas de couleur : les couleurs sont conventionnelles.
 - Les boules sont dessinées plus petites que les ions réels, toutes dans la même proportion : les tailles relatives restent justes. L'interrupteur « tailles réelles » montre que les ions se touchent.
-- Le film est très ralenti, et la vibration des ions est exagérée (environ deux fois) pour être visible.
+- Le film est très ralenti.
 - On ne montre qu'un coin minuscule du grain.
 - Le cristal est représenté parfait, sans défaut.

@@ -12,7 +12,7 @@ Mode d'emploi du test : `docs/tester-une-scene.md` dans le dépôt.
 1. **Le passage de 12 nm à 2 nm** : l'apparition des ions sur la face, puis le reste du grain qui s'efface. Le cube de 216 ions se lit-il comme un cube ? Un élève comprend-il que c'est un coin du grain ?
 2. **Le zoom en lecture automatique** (bouton Lecture) : la vitesse convient-elle en classe ? Les messages restent-ils assez longtemps pour être lus ?
 3. **La taille des boules réduites** (facteur 0,28) : assez grosses pour être vues en projection ? Comparer avec l'interrupteur « tailles réelles ».
-4. **La vibration** (20 pm) : visible sans distraire ?
+4. **La vibration** (10 pm, plus lente) : visible sans distraire ?
 
 ## Grille de relecture
 1. La chimie est-elle juste ?
@@ -30,7 +30,7 @@ Mode d'emploi du test : `docs/tester-une-scene.md` dans le dépôt.
 | Arête du grain | 0,3 mm | fiche NaCl §4 |
 | Cristal affiché | 6 × 6 × 6 ions = 108 Na⁺ + 108 Cl⁻ | fiche NaCl §4 |
 | Facteur de réduction des boules | 0,28 (le même pour toutes) | dossier §3, valeur choisie dans la plage 25 à 30 % |
-| Amplitude de vibration | 20 pm, soit environ 2 fois l'ordre de grandeur réel (environ 10 pm, de mémoire, non vérifié) | exagérée pour être visible, dit dans le bandeau |
+| Amplitude de vibration | 10 pm, ordre de grandeur réel (de mémoire, non vérifié), mouvement ralenti | réduite à la demande de Roger le 15.11.2026 |
 | Couleur de Na | #AB5CF2 (violet) | palette usuelle des modèles moléculaires |
 | Couleur de Cl | #1E9E1E (vert assombri) | validée par Roger le 15.11.2026 (le vert usuel #1FF01F contraste mal sur fond clair) |
 

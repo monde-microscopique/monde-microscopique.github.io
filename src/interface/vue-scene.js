@@ -90,6 +90,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   }
   const scene = new ClasseScene(infos.donnees, rendu, canvasMacro.getContext('2d'));
   const ech = infos.donnees.echelle;
+  vue.style.background = infos.donnees.affichage.fond;
 
   // Règle : graduations d'une décade à l'autre.
   const lmax = Math.log10(ech.regle_max_m), lmin = Math.log10(ech.regle_min_m);
@@ -297,7 +298,9 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const grand = W > 4e-3;
     camEncart.largeur = grand ? 0.13 : 1.4e-3;
     camEncart.centre = grand ? scene.centrePour(0.1) : [scene.L / 2, -scene.L / 2, scene.L / 2];
-    dessinerMacro(ctx, camEncart, scene.decor, { opaciteFaces: 1 });
+    ctx.fillStyle = infos.donnees.affichage.fond;
+    ctx.fillRect(0, 0, ew, eh);
+    dessinerMacro(ctx, camEncart, scene.decor, { couleurTable: infos.donnees.affichage.couleur_support, opaciteFaces: 1 });
     dessinerRepere(ctx, camEncart, scene.camera);
     encartLegende.textContent = grand ? 'salière' : 'grain de sel';
   }
