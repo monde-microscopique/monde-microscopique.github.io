@@ -45,7 +45,7 @@ Mode d'emploi du test : `docs/tester-une-scene.md` dans le dépôt.
 | Marches d'une couche d'ions | 282 pm de haut (demi-arête de la maille), à 13 à 52 nm des arêtes | hauteur : géométrie du réseau ; positions : choix de l'exécutant |
 | Bulles de saumure | 5 à 13 µm | **ordre de grandeur de mémoire, non vérifié** |
 | Noyau de Na⁺ | ²³Na : 11 protons, 12 neutrons, rayon ≈ 3,4 fm | rayon ≈ 1,2 × A^(1/3) fm (ordre de grandeur) |
-| Noyau de Cl⁻ | ³⁵Cl : 17 protons, 18 neutrons, rayon ≈ 3,9 fm | **isotope provisoire** (question posée) |
+| Noyau de Cl⁻ | ³⁵Cl : 17 protons, 18 neutrons, rayon ≈ 3,9 fm | isotope 35, comme le défi 2 de ton artefact (« Cl⁻ formé à partir de l'isotope 35 ») |
 | Schéma de Bohr | Na⁺ : 2, 8 ; Cl⁻ : 2, 8, 8 | électrons = protons − charge, contrôlé automatiquement |
 
 pm = picomètre (10⁻¹² m) ; fm = femtomètre (10⁻¹⁵ m) ; µm = micromètre (10⁻⁶ m) ; A = nombre de masse.
@@ -57,8 +57,8 @@ pm = picomètre (10⁻¹² m) ; fm = femtomètre (10⁻¹⁵ m) ; µm = micromè
 4. **Lecture du relief** : les ions du fond sont légèrement pâlis (indice de profondeur), pour que le cube se lise même immobile.
 5. **Repère** : un cercle rouge entoure le grain étudié tant qu'il est petit à l'écran.
 6. **Textes rédigés par l'exécutant** : tous les messages du zoom (message-…), instrument-…, coin-du-grain, aide-reseau, aide-maille, repere-noyau, et les puces du bandeau sur les tailles et le cristal parfait.
-7. **Zoom dans l'ion** : le schéma de Bohr a la taille de la boule dessinée (pas à l'échelle, c'est écrit) ; électrons répartis régulièrement sur les cercles (**provisoire**, question posée) ; le noyau est dessiné à sa vraie taille, d'où le repère « le noyau est ici » tant qu'il est invisible.
-8. **Nuage électronique (avancé)** : dégradé plus dense au centre, très dilué vers l'extérieur ; il reste visible en zoomant (question posée sur la formulation du « vide »).
+7. **Zoom dans l'ion** : le schéma de Bohr a la taille de la boule dessinée (pas à l'échelle, c'est écrit). Conventions reprises de ton artefact « Lire le tableau périodique » : rayons des couches 62 : 98 : 134, électrons sur 4 positions, célibataires puis paires, couche externe soulignée, noyau compact (protons rouges, neutrons gris) annoté « p⁺ / n⁰ ». Le noyau est dessiné à sa vraie taille, d'où le repère « le noyau est ici » tant qu'il est invisible.
+8. **Nuage électronique (avancé)** : dégradé plus dense au centre, très dilué vers l'extérieur ; il reste visible en zoomant (formulation du « vide » validée le 15.11.2026).
 9. **Maille** : choisie au centre du cube de 216 ions ; volume teinté bleu, sans trait.
 
 ## Écart par rapport à la fiche

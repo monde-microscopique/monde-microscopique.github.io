@@ -9,6 +9,7 @@ import { SceneNaCl } from '../src/scenes/nacl/scene.js';
 import { ecrireLongueur, barreEchelle } from '../src/moteur/echelle.js';
 import { lireTextes } from '../outils/markdown.mjs';
 import { norme, soustraire } from '../src/moteur/vec.js';
+import { positionsElectrons } from '../src/scenes/nacl/atome.js';
 
 let echecs = 0, total = 0;
 function verifier(nom, condition, detail = '') {
@@ -108,6 +109,10 @@ for (const [nom, e] of Object.entries(d.especes)) {
   const A = e.noyau.protons + e.noyau.neutrons;
   verifier(`${nom} : rayon du noyau ≈ 1,2 × A^(1/3) fm (A = ${A})`, proche(e.noyau.rayon_fm, 1.2 * A ** (1 / 3), 0.1));
 }
+verifier('Bohr : couche K pleine = une paire', JSON.stringify(positionsElectrons(2, 1)) === '[2]');
+verifier('Bohr : 8 électrons = 4 paires', JSON.stringify(positionsElectrons(8, 4)) === '[2,2,2,2]');
+verifier('Bohr : célibataires avant les paires (5 → 2,1,1,1)', JSON.stringify(positionsElectrons(5, 4)) === '[2,1,1,1]');
+verifier('Bohr : 3 électrons = 3 célibataires (1,1,1,0)', JSON.stringify(positionsElectrons(3, 4)) === '[1,1,1,0]');
 verifier('Na⁺ : 11 protons, 12 neutrons (²³Na)', d.especes['Na+'].noyau.protons === 11 && d.especes['Na+'].noyau.neutrons === 12);
 verifier('Cl⁻ : 17 protons', d.especes['Cl-'].noyau.protons === 17);
 verifier('1 fm s\'écrit « 1 fm »', ecrireLongueur(1e-15) === '1 fm', ecrireLongueur(1e-15));

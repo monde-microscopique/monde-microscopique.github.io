@@ -35,7 +35,5 @@ Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de
 
 ## Questions ouvertes pour Roger
 
-- Isotope du chlore pour le noyau de Cl⁻ (provisoire : ³⁵Cl).
-- Électrons du schéma de Bohr répartis régulièrement ou par paires (provisoire : régulièrement).
-- Formulation du « vide » en avancé, où le nuage reste visible.
+- Isotope du chlore : ³⁵Cl repris de l'artefact de Roger (défi 2) ; à confirmer.
 - Retour sur le temps 1 : voir le panneau « À contrôler par Roger » et `docs/tester-une-scene.md`.
