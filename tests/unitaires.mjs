@@ -227,6 +227,13 @@ for (const t of [9, 16, 20, 30, 45, 60, 92]) {
 verifier(`eau orientée vers Na⁺ : O à 240 pm, hydrogènes vers l'extérieur (${nGeo} positions contrôlées)`, geoNa);
 verifier('eau orientée vers Cl⁻ : H à 230 pm, Cl⁻···H–O aligné (O à 326 pm)', geoCl);
 verifier('cortèges complets : ions suivis (6 ; 5 pendant un échange) et, dans la solution, chaque ion dissous', cortegeComplet);
+// Un ion part entouré : l'eau occupe ses places tournées vers l'extérieur avant le départ, puis le cortège se complète.
+const lies = (q, t) => plan.molecules.filter((m) => { const r = roleMolecule(m, t); return r.seg.role === 'lie' && r.seg.ion === q && r.avance >= 1; }).length;
+const autres = plan.ordre.slice(2);
+const seuls = autres.filter((q) => lies(q, plan.ions[q].tDepart) === 0).length;
+const lents = autres.filter((q) => lies(q, plan.ions[q].tDepart + 10) < 6).length;
+verifier('un ion part avec de l\'eau déjà liée (au plus 2 % partent seuls)', seuls <= 0.02 * autres.length, `${seuls} ion(s) sur ${autres.length}`);
+verifier('cortège complet (6 molécules) moins de 10 s après le départ', lents === 0, `${lents} ion(s)`);
 const echangesNa = plan.molecules.filter((m) => m.segs.some((s) => s.role === 'errant' && s.ion === naS && s.t < 22)).length;
 verifier('échanges lents : une molécule du cortège du Na⁺ est remplacée pendant l\'étape 2', echangesNa >= 1, String(echangesNa));
 

@@ -356,7 +356,9 @@ export function planDissolution(donnees, cristal, voisinsDe) {
       const chemin = cheminDetachement(q);
       for (const [key, m] of [...sites]) {
         const o = siteO(Math.floor(key / 6), key % 6);
-        if (!chemin.some((p) => dist(p, o) < el.ecart_chemin_pm)) continue;
+        const proprio = Math.floor(key / 6);
+        const seuil = gD[proprio] - g <= Math.round(ch.preparation_s / D) ? el.ecart_chemin_force_pm : el.ecart_chemin_pm;
+        if (!chemin.some((p) => dist(p, o) < seuil)) continue;
         ajouter(m, { t: T, duree: 0.5, role: 'absent' });
         m.libreA = T + 0.5;
         sites.delete(key);
@@ -372,7 +374,7 @@ export function planDissolution(donnees, cristal, voisinsDe) {
       const degage = (q, a, entree) => instants.every((t, x) => {
         const slot = add(positions[x][q], mul(a, dO[cristal[q].espece]));
         const debut = add(slot, mul(entree, 1 - lisse(x / 2)));
-        return positions[x].every((p, j) => j === q || (dist(p, slot) > 420 && dist(p, debut) > 420));
+        return positions[x].every((p, j) => j === q || (dist(p, slot) > 380 && dist(p, debut) > 380));
       });
       for (const q of enAttente) {
         const nq = normale[q];
@@ -382,13 +384,13 @@ export function planDissolution(donnees, cristal, voisinsDe) {
           const a = AXES[k];
           const lat0 = sub(a, mul(nq, dot(a, nq)));
           const base = len(lat0) > 1e-6 ? unit(lat0) : perpendiculaire(a, 1);
-          // Quatre directions d'arrivée possibles, autour de l'axe ; la première dégagée est prise.
-          for (let essai = 0; essai < 4; essai++) {
-            const lat = tourner(base, a, (essai * Math.PI) / 2);
+          // Huit directions d'arrivée possibles, autour de l'axe ; la première dégagée est prise.
+          for (let essai = 0; essai < 8; essai++) {
+            const lat = tourner(base, a, (essai * Math.PI) / 4);
             const entree = add(mul(lat, 360), mul(nq, 260));
             if (!degage(q, a, entree) && g < gD[q] + Math.round((ch.completion_s + 10) / D)) continue;
             const m = allouer(T);
-            ajouter(m, { t: T + 0.4 * x++, duree: 2.0, role: 'lie', ion: q, k, entree });
+            ajouter(m, { t: T + 0.3 * x++, duree: 1.4, role: 'lie', ion: q, k, entree });
             cortege[q][k] = m;
             break;
           }
@@ -414,6 +416,7 @@ export function planDissolution(donnees, cristal, voisinsDe) {
     }
     if (g > finEau && !sites.size && !candidats.some((c) => c.m)) continue;
     // L'eau de surface et l'eau libre sont revues toutes les 0,5 s (et à l'instant 0).
+    // (Revue aussi juste avant chaque départ, pour que l'ion parte entouré.)
     if (g % Math.max(1, Math.round(0.5 / D)) !== 0) continue;
 
     // d) Ions dissous près du grain (on n'y met pas d'eau libre ni de nouvelle eau de surface).
@@ -435,13 +438,17 @@ export function planDissolution(donnees, cristal, voisinsDe) {
         const ld = libreDepuis(q, k);
         if (ld > T + 1e-9) continue; // l'axe est encore bouché par un voisin
         const key = q * 6 + k;
-        const force = estSuivi(q);
+        // Places forcées : l'ion suivi, et tout ion qui va partir dans les secondes qui viennent
+        // (l'eau l'entoure d'abord, puis il se détache avec elle).
+        const force = estSuivi(q) || gD[q] - g <= Math.round(ch.preparation_s / D);
         const occupe = sites.has(key);
-        if (!force && !occupe && ld > -Infinity && T - ld < ch.delai_surface_s) continue;
+        const suivi = estSuivi(q);
+        // Une place libérée par un voisin n'est reprise qu'au bout d'un moment, et jamais sur le chemin
+        // d'un ion qui part ou d'un ion dissous proche (sauf pour l'ion suivi, préparé dès le début).
+        if (!suivi && !occupe && ld > -Infinity && T - ld < (force ? 0.5 : ch.delai_surface_s)) continue;
         const o = siteO(q, k);
-        if (!force && !occupe && pres(o, el.distance_ion_pm, el.distance_suivi_pm)) continue;
-        // Pas de nouvelle eau de surface sur le chemin d'un ion qui va bientôt partir.
-        if (!force && !occupe && bientot.some((j) => j !== q && chemins3[j].some((p) => dist(p, o) < el.ecart_chemin_pm))) continue;
+        if (!suivi && !occupe && (force ? pres(o, 420, 420) : pres(o, el.distance_ion_pm, el.distance_suivi_pm))) continue;
+        if (!suivi && !occupe && bientot.some((j) => j !== q && chemins3[j].some((p) => dist(p, o) < (force ? el.ecart_chemin_force_pm : el.ecart_chemin_pm)))) continue;
         voulus.push({ key, q, k, o, rangP: force ? -2 : occupe ? -1 : prioSite[key] });
       }
     }
@@ -459,7 +466,7 @@ export function planDissolution(donnees, cristal, voisinsDe) {
     for (const c of tries) {
       if (libres.length >= plafond) break;
       if (choisis.some((s) => dist(s.o, c.p) < el.ecart_eau_surface_pm || dist(add(s.o, mul(AXES[s.k], 200)), c.p) < el.ecart_eau_surface_pm)) continue;
-      if (!c.m && pres(c.p, el.distance_ion_pm + 100, el.distance_suivi_pm + 150)) continue;
+      if (c.m ? pres(c.p, 650, 650) : pres(c.p, el.distance_ion_pm + 100, el.distance_suivi_pm + 150)) continue;
       if (libres.some((l) => dist(l.p, c.p) < el.ecart_libres_pm)) continue;
       libres.push(c);
     }
@@ -551,6 +558,13 @@ function evaluer(plan, seg, t, posIons, dissous) {
     const d = sub(o, posIons[q]);
     const l = len(d);
     if (l < R && l > 1e-6) o = add(o, mul(d, ((R - l) / l) * 0.9));
+  }
+  // … sans être poussée contre le cristal : les ions du cristal la repoussent aussi.
+  for (let q = 0; q < posIons.length; q++) {
+    if (t > plan.ions[q].tDepart) continue;
+    const d = sub(o, posIons[q]);
+    const l = len(d);
+    if (l < 520 && l > 1e-6) o = add(o, mul(d, (520 - l) / l));
   }
   return { o, f: repereCulbute(seg.cu, t) };
 }

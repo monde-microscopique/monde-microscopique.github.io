@@ -16,7 +16,7 @@ Mis à jour le 16 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 ## Contrôles automatiques
 
-À chaque envoi : 78 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 52 contrôles dans Chrome (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+À chaque envoi : 80 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 52 contrôles dans Chrome (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
 
 Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
 

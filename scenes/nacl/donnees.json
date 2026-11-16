@@ -240,7 +240,7 @@
    ],
    "depart_na": 10,
    "depart_cl": 24,
-   "completion_s": 2.5,
+   "completion_s": 0.5,
    "premier_echange_s": 4,
    "echange_s": [
     6,
@@ -255,7 +255,8 @@
     1.5
    ],
    "fin_simulation": 170,
-   "boucle_s": 50
+   "boucle_s": 50,
+   "preparation_s": 3
   },
   "diffusion": {
    "pas_s": 0.5,
@@ -289,7 +290,8 @@
    "agitation_pm": 60,
    "source": "décision de Roger du 16.11.2026 : une centaine de molécules au plus autour du grain",
    "repousse_pm": 800,
-   "ecart_chemin_pm": 450
+   "ecart_chemin_pm": 450,
+   "ecart_chemin_force_pm": 250
   },
   "camera": [
    [
