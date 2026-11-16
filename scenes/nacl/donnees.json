@@ -261,7 +261,6 @@
   "diffusion": {
    "pas_s": 0.5,
    "ecart_pm": 38,
-   "derive_pm_s": 25,
    "derive_pres_pm_s": 400,
    "detachement_pas": 5,
    "detachement_pm": 1000,
@@ -273,7 +272,11 @@
    "distance_cristal_suivi_pm": 1200,
    "rayon_max_nm": 5.0,
    "lissage": true,
-   "source": "choix de l'exécutant : marche au hasard tirée une fois pour toutes (graine fixe), lissée, sans forces"
+   "source": "choix de l'exécutant : marche au hasard tirée une fois pour toutes (graine fixe), lissée, sans forces ; chaque ion dérive lentement vers un point tiré au hasard dans une boule de 4,4 nm de rayon",
+   "rayon_cible_nm": 4.4,
+   "ecart_cibles_pm": 950,
+   "rappel_par_s": 0.03,
+   "derive_max_pm_s": 150
   },
   "eau_libre": {
    "maximum": 100,

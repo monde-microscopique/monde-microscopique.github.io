@@ -214,6 +214,22 @@ export function planDissolution(donnees, cristal, voisinsDe) {
     return pire;
   };
   const sigma = dif.ecart_pm;
+  // Points d'arrivée moyens, tirés au hasard dans toute la boule (et non sur sa surface) : la solution
+  // finale remplit le volume. Les premiers ions partis reçoivent les points les plus éloignés, pour ne pas
+  // avoir à traverser les autres. Chaque ion dérive lentement vers son point, en se déplaçant au hasard.
+  const Rc = dif.rayon_cible_nm * 1000;
+  const pts = [];
+  let ecart = dif.ecart_cibles_pm;
+  for (let essais = 0; pts.length < n; essais++) {
+    if (essais > 200000) { ecart *= 0.9; essais = 0; }
+    const p = [(2 * r() - 1) * Rc, (2 * r() - 1) * Rc, (2 * r() - 1) * Rc];
+    if (len(p) > Rc) continue;
+    const c = add(centre, p);
+    if (pts.every((o) => dist(o, c) >= ecart)) pts.push(c);
+  }
+  pts.sort((a, b) => dist(b, centre) - dist(a, centre));
+  const cible = new Array(n);
+  ordre.forEach((q, k) => { cible[q] = pts[k]; });
   let boite = null; // boîte englobant le cristal restant
   let gene = null;  // position de ce qui gêne le plus (cristal ou autre ion), relevée par marge()
   for (let g = 1; g <= G; g++) {
@@ -236,7 +252,11 @@ export function planDissolution(donnees, cristal, voisinsDe) {
       const ext = unit(sub(prec, centre));
       // Près du cristal, un ion s'en écarte plus vite (sauf les ions suivis, qui restent dans le champ de la caméra).
       const pres = !estSuivi(q) && enCristal.length && dist(prec, centre) < rayonCristal + 1500;
-      const derive = mul(ext, (dif.derive_pm_s + (pres ? dif.derive_pres_pm_s : 0)) * D);
+      // Dérive lente vers le point d'arrivée (les ions suivis ne s'y mettent qu'avec la dissolution du grain).
+      const versCible = sub(cible[q], prec);
+      const actif = !estSuivi(q) || g * D >= ch.debut_dissolution;
+      const vitesse = actif ? Math.min(len(versCible) * dif.rappel_par_s, dif.derive_max_pm_s) : 0;
+      const derive = add(mul(unit(versCible), vitesse * D), mul(ext, (pres ? dif.derive_pres_pm_s : 0) * D));
       // Jusqu'à 10 pas tirés au hasard ; le premier qui respecte les distances est gardé.
       // Sinon, on garde le meilleur, ou on reste sur place si c'est mieux.
       let choix = null, meilleure = -Infinity;

@@ -162,9 +162,10 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       question.append(
         T(e.texte, { class: 'question-texte' }, 'p'),
         textes.bloc('p', 'image-arretee', null, { class: 'question-note' }),
-        i < scene.etapes.length - 1
-          ? el('button', { class: 'bouton bouton-principal', type: 'button', onclick: () => { scene.allerEtape(i + 1); majEtape(); } }, textes.brut('bouton-observer'))
-          : null,
+        // Pas de bouton « Observer » après la dernière question (un « null » s'affichait).
+        ...(i < scene.etapes.length - 1
+          ? [el('button', { class: 'bouton bouton-principal', type: 'button', onclick: () => { scene.allerEtape(i + 1); majEtape(); } }, textes.brut('bouton-observer'))]
+          : []),
       );
       question.hidden = false;
     } else {
@@ -215,13 +216,16 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   btnCapture.addEventListener('click', () => capturer());
 
   // ------------------------------------------------------------ entrées
+  // Zoomer arrête la lecture pendant le zoom guidé (temps 1), où la lecture est le zoom lui-même ;
+  // pendant une animation (temps 2), le film continue.
+  const zoomArrete = () => { if (scene.etape.type === 'zoom') scene.etat.lecture = false; };
   const pointeurs = new Map();
   let distPince = 0, deplace = 0;
   vue.addEventListener('wheel', (ev) => {
     ev.preventDefault();
     const dy = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY;
     scene.zoomer(Math.exp(dy * 0.0015));
-    scene.etat.lecture = false;
+    zoomArrete();
   }, { passive: false });
   vue.addEventListener('pointerdown', (ev) => {
     if (ev.target.closest('.question, .regle, .encart, .compteurs')) return;
@@ -244,7 +248,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       const d = Math.hypot(a.x - b.x, a.y - b.y);
       if (distPince > 0 && d > 0) scene.zoomer(distPince / d);
       distPince = d;
-      scene.etat.lecture = false;
+      zoomArrete();
     } else {
       scene.tourner(dx, dy);
     }
@@ -266,7 +270,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const r = regleRail.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
     scene.definirLargeur(10 ** (lmax - f * (lmax - lmin)));
-    scene.etat.lecture = false;
+    zoomArrete();
   };
   regle.addEventListener('pointerdown', (ev) => { regle.setPointerCapture(ev.pointerId); regler(ev); });
   regle.addEventListener('pointermove', (ev) => { if (regle.hasPointerCapture(ev.pointerId)) regler(ev); });
@@ -277,8 +281,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     let traite = true;
     if (k === 'ArrowRight' || k === 'PageDown') { scene.allerEtape(scene.etat.etape + 1); majEtape(); }
     else if (k === 'ArrowLeft' || k === 'PageUp') { scene.allerEtape(scene.etat.etape - 1); majEtape(); }
-    else if (k === 'ArrowUp' || k === '+' || k === '=') { scene.zoomer(0.8); scene.etat.lecture = false; }
-    else if (k === 'ArrowDown' || k === '-') { scene.zoomer(1.25); scene.etat.lecture = false; }
+    else if (k === 'ArrowUp' || k === '+' || k === '=') { scene.zoomer(0.8); zoomArrete(); }
+    else if (k === 'ArrowDown' || k === '-') { scene.zoomer(1.25); zoomArrete(); }
     else if (k === ' ') { if (scene.fige) { scene.allerEtape(scene.etat.etape + 1); majEtape(); } else scene.basculerLecture(); }
     else if (k === 'Escape') fermerPanneau();
     else {

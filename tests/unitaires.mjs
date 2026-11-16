@@ -264,6 +264,12 @@ verifier('aucune molécule d\'eau dans un autre ion (plus de 200 pm entre O et l
 verifier('un ion parti ne revient pas dans le cristal (toujours à plus de 450 pm)', !retour);
 verifier('mouvement continu : pas de saut (moins de 25 pm en 0,02 s)', saut < 25, `${saut.toFixed(1)} pm`);
 verifier('un ion dissous bouge encore longtemps après (diffusion)', norme(soustraire(positionIon(plan, 100, 80), positionIon(plan, 100, 85))) > 50);
+// La solution remplit une boule (et non une coquille) : on compte les ions selon leur distance au centre.
+const rayons = cristal.map((_, q) => norme(soustraire(positionIon(plan, q, 100), plan.centre)) / 1000);
+const Rc = d.temps2.diffusion.rayon_cible_nm;
+const dedans = rayons.filter((x) => x < Rc / 2).length / 216, dehors = rayons.filter((x) => x > 0.8 * Rc).length / 216;
+verifier('solution : les ions remplissent une boule, pas une coquille', dedans >= 0.08 && dehors <= 0.6,
+  `${(100 * dedans).toFixed(0)} % à moins de ${Rc / 2} nm du centre (boule uniforme : 12 %), ${(100 * dehors).toFixed(0)} % au-delà de ${(0.8 * Rc).toFixed(1)} nm (boule uniforme : 49 %)`);
 const F = d.temps2.chronologie.fin_simulation;
 const loinA = etatDissolution(plan, F - 0.1), loinB = etatDissolution(plan, F + 0.1), loinC = etatDissolution(plan, 450);
 verifier('au-delà de la fin du calcul, le film continue sans saut (aller-retour)', loinA.ions.every((x, k) => Math.abs(x - loinB.ions[k]) < 5) && loinC.ions.every(Number.isFinite));

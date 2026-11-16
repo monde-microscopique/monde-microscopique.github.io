@@ -46,7 +46,9 @@ export function dessinerAtome(ctx, camera, ion, options) {
 
   if (f.schema > 0.01) {
     if (options.avance) dessinerNuage(ctx, camera, c, R, f.schema);
-    else dessinerBohr(ctx, c, R, e, f.schema);
+    // Le schéma de Bohr n'est pas à l'échelle : il est limité à la taille de l'écran, pour rester entier
+    // sur un écran bas (portable) et quand l'ion est dessiné à sa vraie taille (temps 2).
+    else dessinerBohr(ctx, c, Math.min(R, 0.36 * Math.min(camera.ecran.l, camera.ecran.h)), e, f.schema);
   }
 
   // Le noyau à sa vraie taille : invisible tant qu'il fait moins de quelques pixels ; un repère montre où il est.

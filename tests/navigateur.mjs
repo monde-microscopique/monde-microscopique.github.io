@@ -239,6 +239,24 @@ try {
   // Solution : chaque ion avec ses 6 molécules d'eau, en représentation compacte (vraies tailles).
   const sol = await page.evaluate(() => { const s = window.__monde.scene; return { eau: Array.from(s.etat2.fonduEau).filter((f) => f < 0.5).length, facteur: s.facteurTaille, tailles: document.querySelectorAll('.inter')[3].hidden }; });
   verifier('solution : 6 molécules d\'eau par ion, eau et ions à leur vraie taille, « tailles réelles » masqué', sol.eau >= 1295 && sol.facteur === 1 && sol.tailles, JSON.stringify(sol));
+  // Zoomer pendant une animation ne l'arrête pas ; la dernière question n'affiche pas « null ».
+  const zoomAnim = await page.evaluate(async () => {
+    const s = window.__monde.scene;
+    s.allerEtape(s.etapes.findIndex((e) => e.id === 'dissolution-graduelle'));
+    s.etat.lecture = true;
+    const t0 = s.etat.tc;
+    document.querySelector('.vue').dispatchEvent(new WheelEvent('wheel', { deltaY: -200, bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 1500));
+    const res = { lecture: s.etat.lecture, avance: s.etat.tc - t0 };
+    s.etat.lecture = false;
+    return res;
+  });
+  verifier('zoomer pendant une animation ne l\'arrête pas', zoomAnim.lecture && zoomAnim.avance > 0, JSON.stringify(zoomAnim));
+  await page.locator('.pastille').last().click();
+  const texteFin = await page.locator('.question').innerText();
+  verifier('dernière question : pas de « null » affiché', !texteFin.includes('null'), texteFin.slice(0, 80));
+  await page.locator('.pastille').nth(await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'solution'))).click();
+  await page.evaluate(() => { const s = window.__monde.scene; s.etat.lecture = false; s.etat.tc = 92; s.appliquerTemps(); });
   // Étiquettes « O » et « H » sur l'eau.
   await page.keyboard.press('e');
   await page.waitForFunction(() => window.__monde.scene.etiqIons.opacite === 1, null, { timeout: 5000 }).catch(() => {});

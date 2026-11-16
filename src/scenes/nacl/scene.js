@@ -435,7 +435,9 @@ export class SceneNaCl {
     // (en dessous de 150 pm, la précision du calcul graphique ne suffit plus ; la couche 2D prend le relais).
     const r = this.rendu;
     if (!r) return;
-    const visibleGl = c.largeur > 1.5e-10 ? f.ions : 0;
+    // Dans le zoom dans l'ion, les voisins s'estompent derrière le schéma de l'atome.
+    const estompe = this.etat.fonduIon * (1 - fa.boule) * 0.6;
+    const visibleGl = c.largeur > 1.5e-10 ? f.ions * (1 - estompe) : 0;
     r.canvas.style.opacity = String(visibleGl);
     if (visibleGl < 0.002) return;
     this.majFonduSurface(f.surface);
