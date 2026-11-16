@@ -25,6 +25,9 @@ varying float vZ, vR, vRpx;
 varying vec3 vCouleur, vEtat;
 ${VIBRATION}
 void main() {
+  // Sphère effacée : hors de l'écran, pour ne rien calculer (sinon des centaines de carrés invisibles
+  // se superposent et coûtent cher sur une carte graphique lente).
+  if (aEtat.x > 0.995) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   vec3 d = aCentre + vibration(aPhase) - uCentre;
   float r = aRayon * uFacteur;
   float rpx = max(r * uEchelle, 0.5);
@@ -172,7 +175,7 @@ void main() {
   float h = clamp(rpx * 0.9, 13.0, 30.0);
   vec2 p = vec2(dot(d, uDroite), dot(d, uHaut)) * uEchelle + aCoin * vec2(h * aRapport, h) * 0.5;
   float z = (dot(d, uAvant) - r * 1.05) / uProf;
-  gl_Position = rpx < uSeuil ? vec4(2.0, 2.0, 2.0, 1.0) : vec4(p * 2.0 / uEcran, z, 1.0);
+  gl_Position = rpx < uSeuil || aFondu > 0.995 ? vec4(2.0, 2.0, 2.0, 1.0) : vec4(p * 2.0 / uEcran, z, 1.0);
   vTex = vec2(mix(aUV.x, aUV.z, aCoin.x * 0.5 + 0.5), mix(aUV.w, aUV.y, aCoin.y * 0.5 + 0.5));
   vFondu = aFondu;
 }`;

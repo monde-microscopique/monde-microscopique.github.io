@@ -13,7 +13,7 @@ const INTERRUPTEURS = [
   { nom: 'etiquettes', cle: 'inter-etiquettes', touche: 'e' },
   { nom: 'voisins', cle: 'inter-voisins', touche: 'v' },
   { nom: 'compteurs', cle: 'inter-compteurs', touche: 'c' },
-  { nom: 'tailles', cle: 'inter-tailles', touche: 't' },
+  { nom: 'tailles', cle: 'inter-tailles', touche: 't', temps1Seulement: true },
   { nom: 'maille', cle: 'inter-maille', touche: 'm' },
   { nom: 'ion', cle: 'inter-ion', touche: 'i' },
   { nom: 'avance', cle: 'inter-avance', touche: 'a' },
@@ -180,6 +180,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     for (const [nom, b] of Object.entries(boutonsInter)) b.setAttribute('aria-pressed', String(scene.etat.inter[nom]));
     // δ+ δ− : seulement au niveau avancé (fiche NaCl §6).
     for (const i of INTERRUPTEURS) if (i.avanceSeulement) boutonsInter[i.nom].hidden = !scene.etat.inter.avance;
+    // « Tailles réelles » : inutile pendant la dissolution, où tout est déjà à sa vraie taille.
+    for (const i of INTERRUPTEURS) if (i.temps1Seulement) boutonsInter[i.nom].hidden = !!scene.temps2;
     equation.hidden = !scene.etat.inter.equation;
     if (!equation.hidden && !equation.dataset.rempli) {
       equation.append(T('equation-dissolution', { class: 'equation-formule' }, 'div'));

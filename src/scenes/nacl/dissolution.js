@@ -10,8 +10,9 @@
 //  - un ion de surface se détache avec les molécules qui l'entouraient, son cortège se complète
 //    (6 molécules en octaèdre), puis il diffuse : marche au hasard, avec un léger éloignement moyen ;
 //  - les places libérées à la surface sont reprises par de l'eau venue de l'extérieur ;
-//  - loin du grain, le cortège d'eau d'un ion n'est plus dessiné : un halo le représente.
-//    Les deux ions suivis (un Na⁺, un Cl⁻) gardent leur cortège dessiné, avec des échanges lents.
+//  - chaque ion dissous garde ses 6 molécules d'eau ; autour des deux ions suivis (un Na⁺, un Cl⁻),
+//    une molécule du cortège est de temps en temps remplacée par une autre (échanges lents).
+// Représentation compacte : ions et eau à leur vraie taille pendant la dissolution (décision du 16.11.2026).
 // Les molécules d'eau sont des corps rigides : O–H et l'angle H–O–H ne changent jamais.
 
 import { aleatoire } from './reseau.js';
@@ -234,7 +235,7 @@ export function planDissolution(donnees, cristal, voisinsDe) {
       const prec = cur[q];
       const ext = unit(sub(prec, centre));
       // Près du cristal, un ion s'en écarte plus vite (sauf les ions suivis, qui restent dans le champ de la caméra).
-      const pres = !estSuivi(q) && enCristal.length && dist(prec, centre) < rayonCristal + 1200;
+      const pres = !estSuivi(q) && enCristal.length && dist(prec, centre) < rayonCristal + 1500;
       const derive = mul(ext, (dif.derive_pm_s + (pres ? dif.derive_pres_pm_s : 0)) * D);
       // Jusqu'à 10 pas tirés au hasard ; le premier qui respecte les distances est gardé.
       // Sinon, on garde le meilleur, ou on reste sur place si c'est mieux.
@@ -263,10 +264,21 @@ export function planDissolution(donnees, cristal, voisinsDe) {
     }
   }
 
+  // Lissage léger de la marche (après le détachement) : pas de zigzags brusques.
+  if (dif.lissage) {
+    chemins.forEach((W, q) => {
+      const m = W.length / 3;
+      const copie = W.slice();
+      for (let k = nDet(q) + 2; k < m - 1; k++) for (let c = 0; c < 3; c++) {
+        W[k * 3 + c] = (copie[(k - 1) * 3 + c] + 2 * copie[k * 3 + c] + copie[(k + 1) * 3 + c]) / 4;
+      }
+    });
+  }
+
   const ions = cristal.map((ion, q) => ({
     espece: ion.espece, depart: ion.pos, tDepart: tD[q], chemin: chemins[q], rang: rang[q], suivi: estSuivi(q), normale: normale[q],
   }));
-  const plan = { ions, ordre, centre, suivis, D, ch, eau: { OH: eau.OH_pm, demiAngle: angle / 2 }, molecules: [], halo: t2.halo };
+  const plan = { ions, ordre, centre, suivis, D, ch, eau: { OH: eau.OH_pm, demiAngle: angle / 2 }, molecules: [], repousse: el.repousse_pm };
 
   // 4. Eau dessinée : un ensemble de molécules réutilisables, chacune décrite par une suite de rôles.
   //    Rôles : « lie » (sur l'axe d'un ion, orientée), « libre » (agitation autour d'un point),
@@ -282,6 +294,8 @@ export function planDissolution(donnees, cristal, voisinsDe) {
     plan.reperesLies.push(repereVersAxe(cristal[q].espece, AXES[k], perpendiculaire(AXES[k], r() * 6.283), angle));
   }
   const siteO = (q, k) => add(cristal[q].pos, mul(AXES[k], dO[cristal[q].espece]));
+  const cheminDetachement = (q) => [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1].map((f) => add(cristal[q].pos, mul(normale[q], lDet(q) * f)));
+  const chemins3 = cristal.map((_, q) => cheminDetachement(q));
   const libreDepuis = (q, k) => { const j = voisinSur(q, AXES[k]); return j === undefined ? -Infinity : tD[j]; };
 
   const mol = plan.molecules;
@@ -313,7 +327,7 @@ export function planDissolution(donnees, cristal, voisinsDe) {
 
   const sites = new Map(); // q*6+k → molécule
   const prioSite = Array.from({ length: n * 6 }, () => r());
-  const cortegeSuivi = { [suivis['Na+']]: new Array(6).fill(null), [suivis['Cl-']]: new Array(6).fill(null) };
+  const cortege = cristal.map(() => new Array(6).fill(null)); // molécules liées à chaque ion dissous
   const echanges = [];
   for (const q of [suivis['Na+'], suivis['Cl-']]) {
     const ordreAxes = [0, 1, 2, 3, 4, 5].sort(() => 0);
@@ -329,37 +343,63 @@ export function planDissolution(donnees, cristal, voisinsDe) {
 
   for (let g = 0; g <= G; g++) {
     const T = g * D;
-    // a) Départs : les molécules liées à l'ion partent avec lui.
+    // a) Départs : les molécules liées à l'ion partent avec lui ; l'eau de surface voisine qui se trouve
+    //    sur son chemin s'écarte (elle s'efface et sera remplacée plus tard).
     for (let q = 0; q < n; q++) {
       if (gD[q] !== g) continue;
       for (let k = 0; k < 6; k++) {
         const m = sites.get(q * 6 + k);
         if (!m) continue;
         sites.delete(q * 6 + k);
-        if (estSuivi(q)) cortegeSuivi[q][k] = m;
-        else { ajouter(m, { t: T + ch.effacement_cortege_s[0], duree: ch.effacement_cortege_s[1], role: 'absent' }); m.libreA = T + ch.effacement_cortege_s[0] + ch.effacement_cortege_s[1]; }
+        cortege[q][k] = m;
+      }
+      const chemin = cheminDetachement(q);
+      for (const [key, m] of [...sites]) {
+        const o = siteO(Math.floor(key / 6), key % 6);
+        if (!chemin.some((p) => dist(p, o) < el.ecart_chemin_pm)) continue;
+        ajouter(m, { t: T, duree: 0.5, role: 'absent' });
+        m.libreA = T + 0.5;
+        sites.delete(key);
       }
     }
-    // b) Cortège des ions suivis : les places tournées vers le cristal sont prises par de l'eau venue de l'extérieur.
-    for (const q of [suivis['Na+'], suivis['Cl-']]) {
-      if (g !== gD[q] + Math.round(ch.completion_s / D)) continue;
-      const nq = normale[q];
-      let x = 0;
-      for (let k = 0; k < 6; k++) {
-        if (cortegeSuivi[q][k]) continue;
-        const a = AXES[k];
-        const lat = sub(a, mul(nq, dot(a, nq)));
-        const entree = add(mul(len(lat) > 1e-6 ? unit(lat) : perpendiculaire(a, 1), 360), mul(nq, 260));
-        const m = allouer(T);
-        ajouter(m, { t: T + 0.5 * x++, duree: 2.2, role: 'lie', ion: q, k, entree });
-        cortegeSuivi[q][k] = m;
+    // b) Cortège complété : les places tournées vers le cristal sont prises par de l'eau venue de l'extérieur,
+    //    dès que le chemin d'arrivée est dégagé (aucun autre ion sur le trajet pendant 2 s).
+    const enAttente = [];
+    for (let q = 0; q < n; q++) if (g >= gD[q] + Math.round(ch.completion_s / D) && cortege[q].some((m) => !m)) enAttente.push(q);
+    if (enAttente.length) {
+      const instants = [T, T + 1, T + 2];
+      const positions = instants.map((t) => cristal.map((_, j) => positionIon(plan, j, t)));
+      const degage = (q, a, entree) => instants.every((t, x) => {
+        const slot = add(positions[x][q], mul(a, dO[cristal[q].espece]));
+        const debut = add(slot, mul(entree, 1 - lisse(x / 2)));
+        return positions[x].every((p, j) => j === q || (dist(p, slot) > 420 && dist(p, debut) > 420));
+      });
+      for (const q of enAttente) {
+        const nq = normale[q];
+        let x = 0;
+        for (let k = 0; k < 6; k++) {
+          if (cortege[q][k]) continue;
+          const a = AXES[k];
+          const lat0 = sub(a, mul(nq, dot(a, nq)));
+          const base = len(lat0) > 1e-6 ? unit(lat0) : perpendiculaire(a, 1);
+          // Quatre directions d'arrivée possibles, autour de l'axe ; la première dégagée est prise.
+          for (let essai = 0; essai < 4; essai++) {
+            const lat = tourner(base, a, (essai * Math.PI) / 2);
+            const entree = add(mul(lat, 360), mul(nq, 260));
+            if (!degage(q, a, entree) && g < gD[q] + Math.round((ch.completion_s + 10) / D)) continue;
+            const m = allouer(T);
+            ajouter(m, { t: T + 0.4 * x++, duree: 2.0, role: 'lie', ion: q, k, entree });
+            cortege[q][k] = m;
+            break;
+          }
+        }
       }
     }
     // c) Échanges lents dans le cortège des ions suivis.
     for (const ex of echanges) {
       if (ex.g !== g) continue;
       const { q, k } = ex;
-      const ancien = cortegeSuivi[q][k];
+      const ancien = cortege[q][k];
       if (!ancien) continue;
       const a = AXES[k];
       const p0 = add(positionIon(plan, q, T), mul(a, dO[cristal[q].espece]));
@@ -370,21 +410,23 @@ export function planDissolution(donnees, cristal, voisinsDe) {
       const nouveau = allouer(T);
       const cote = perpendiculaire(a, r() * 6.283);
       ajouter(nouveau, { t: T + 0.7, duree: 2.2, role: 'lie', ion: q, k, entree: add(mul(cote, 330), mul(a, 260)) });
-      cortegeSuivi[q][k] = nouveau;
+      cortege[q][k] = nouveau;
     }
     if (g > finEau && !sites.size && !candidats.some((c) => c.m)) continue;
     // L'eau de surface et l'eau libre sont revues toutes les 0,5 s (et à l'instant 0).
-    if (g % 2 !== 0) continue;
+    if (g % Math.max(1, Math.round(0.5 / D)) !== 0) continue;
 
     // d) Ions dissous près du grain (on n'y met pas d'eau libre ni de nouvelle eau de surface).
     const proches = [];
     for (let q = 0; q < n; q++) {
       if (gD[q] >= g) continue;
       const p = positionIon(plan, q, T);
-      if (dist(p, centre) < rayonCristal + 2500) proches.push({ q, p, p2: positionIon(plan, q, T + 1) });
+      if (dist(p, centre) < rayonCristal + 2500) proches.push({ q, p, p2: positionIon(plan, q, T + 1.5) });
     }
     const pres = (x, d, dSuivi) => proches.some((o) => Math.min(dist(x, o.p), dist(x, o.p2)) < (estSuivi(o.q) ? dSuivi : d));
 
+    const bientot = [];
+    for (let q = 0; q < n; q++) if (gD[q] >= g - Math.round(2.5 / D) && gD[q] <= g + Math.round(3 / D)) bientot.push(q);
     // e) Eau de surface voulue : axes libres des ions encore dans le cristal, espacées.
     const voulus = [];
     for (let q = 0; q < n; q++) {
@@ -398,6 +440,8 @@ export function planDissolution(donnees, cristal, voisinsDe) {
         if (!force && !occupe && ld > -Infinity && T - ld < ch.delai_surface_s) continue;
         const o = siteO(q, k);
         if (!force && !occupe && pres(o, el.distance_ion_pm, el.distance_suivi_pm)) continue;
+        // Pas de nouvelle eau de surface sur le chemin d'un ion qui va bientôt partir.
+        if (!force && !occupe && bientot.some((j) => j !== q && chemins3[j].some((p) => dist(p, o) < el.ecart_chemin_pm))) continue;
         voulus.push({ key, q, k, o, rangP: force ? -2 : occupe ? -1 : prioSite[key] });
       }
     }
@@ -484,14 +528,6 @@ export function positionIon(plan, q, t) {
 
 export const dansLeCristal = (plan, q, t) => t <= plan.ions[q].tDepart;
 
-// Halo (cortège d'eau non dessiné) : 1 = invisible, 0 = visible.
-export function fonduHalo(plan, q, t) {
-  const ion = plan.ions[q];
-  if (ion.suivi) return 1;
-  const h = plan.halo;
-  return 1 - lisse((t - ion.tDepart - h.apparition_s[0]) / h.apparition_s[1]);
-}
-
 // Rôle d'une molécule au temps t : indice du segment courant et avancement de la transition (0 à 1).
 export function roleMolecule(m, t) {
   let j = m.segs.length - 1;
@@ -511,7 +547,7 @@ function evaluer(plan, seg, t, posIons, dissous) {
   // L'eau libre s'écarte des ions dissous qui passent (sauf de l'ion qu'elle vient de quitter).
   for (const q of dissous) {
     if (q === seg.ion) continue;
-    const R = plan.ions[q].suivi ? 760 : 520;
+    const R = plan.repousse;
     const d = sub(o, posIons[q]);
     const l = len(d);
     if (l < R && l > 1e-6) o = add(o, mul(d, ((R - l) / l) * 0.9));
@@ -519,7 +555,7 @@ function evaluer(plan, seg, t, posIons, dissous) {
   return { o, f: repereCulbute(seg.cu, t) };
 }
 
-// État complet au temps t : positions des ions, des atomes O et H, visibilité de l'eau et des halos.
+// État complet au temps t : positions des ions, des atomes O et H, visibilité de l'eau.
 // Au-delà de la fin du calcul, le film repart en arrière puis en avant sur sa dernière minute
 // (une marche au hasard jouée à l'envers reste une marche au hasard).
 export function tempsJoue(plan, t) {
@@ -534,7 +570,7 @@ export function etatDissolution(plan, tReel, sortie) {
   const nI = plan.ions.length, nM = plan.molecules.length;
   const s = sortie || {
     ions: new Float32Array(nI * 3), O: new Float32Array(nM * 3), H: new Float32Array(nM * 6),
-    fonduEau: new Float32Array(nM), fonduHalo: new Float32Array(nI), dansCristal: new Uint8Array(nI),
+    fonduEau: new Float32Array(nM), dansCristal: new Uint8Array(nI),
   };
   const posIons = [];
   const dissous = [];
@@ -545,7 +581,6 @@ export function etatDissolution(plan, tReel, sortie) {
     const dans = dansLeCristal(plan, q, t);
     s.dansCristal[q] = dans ? 1 : 0;
     if (!dans) dissous.push(q);
-    s.fonduHalo[q] = fonduHalo(plan, q, t);
   }
   const { OH, demiAngle } = plan.eau;
   const cb = Math.cos(demiAngle) * OH, sp = Math.sin(demiAngle) * OH;

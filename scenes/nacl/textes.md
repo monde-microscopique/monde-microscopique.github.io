@@ -128,7 +128,7 @@ Un ion Na⁺ de surface se détache avec l'eau qui le touchait ; d'autres moléc
 Même chose pour un ion Cl⁻ de surface : 6 molécules d'eau l'entourent, un hydrogène tourné vers l'ion.
 
 ## message-dissolution-graduelle
-Les ions de surface partent un à un, Na⁺ et Cl⁻ en nombres égaux, et l'eau prend leur place : le cristal rétrécit. Autour des ions qui s'éloignent, un halo bleu représente l'eau qui les entoure.
+Les ions de surface partent un à un, chacun entouré de 6 molécules d'eau, Na⁺ et Cl⁻ en nombres égaux ; l'eau prend leur place : le cristal rétrécit.
 
 ## message-solution
 Il n'y a plus de cristal : chaque ion, entouré d'eau, se déplace au hasard dans la solution. Les compteurs n'ont pas changé.
@@ -148,7 +148,8 @@ Où est passé le sel ?
 - Le film est très ralenti.
 - On ne montre qu'un coin minuscule du grain.
 - Le coin montré à l'échelle des ions est parfait ; un vrai cristal a des défauts (marches, trous, bulles).
-- Dissolution : le cristal minuscule remplace le grain entier, et on ne dessine qu'une petite partie de l'eau (une centaine de molécules près du grain). Autour des ions qui s'éloignent, un halo bleu remplace les molécules d'eau ; seuls les deux ions suivis gardent leurs molécules dessinées.
+- Dissolution : le cristal minuscule remplace le grain entier, et on ne dessine qu'une petite partie de l'eau : une centaine de molécules près du grain et les 6 molécules qui entourent chaque ion dissous. En réalité, toute la place est occupée par de l'eau.
+- Dissolution : ions et molécules d'eau sont dessinés à leur vraie taille (représentation compacte) ; au zoom et à l'exploration, les ions sont dessinés plus petits.
 - Le film est très ralenti et l'ordre de départ des ions est mis en scène. Leurs déplacements dans l'eau sont tirés au hasard une fois pour toutes : le film est le même à chaque lecture.
 - Le nombre de molécules d'eau autour de chaque ion varie en réalité (ici, toujours 6).
 - Les liaisons entre molécules d'eau ne sont pas montrées.

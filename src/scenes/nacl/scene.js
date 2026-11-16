@@ -51,27 +51,21 @@ export class SceneNaCl {
     const phasesEau = this.plan.molecules.map(() => phase());
     this.spheresO = phasesEau.map((ph) => ({ pos: [0, 0, 0], rayon: eau.rayon_O_pm, couleur: couleurRvb(eau.couleur_O), phase: ph }));
     this.spheresH = phasesEau.flatMap((ph) => [0, 1].map(() => ({ pos: [0, 0, 0], rayon: eau.rayon_H_pm, couleur: couleurRvb(eau.couleur_H), phase: ph })));
-    // Halos (cortège d'eau non dessiné des ions dissous) : mêmes phases de vibration que les ions.
-    const halo = this.d.temps2.halo;
-    this.spheresHalo = this.spheresCristal.map((sc) => ({ pos: sc.pos, rayon: halo.rayon_pm, couleur: couleurRvb(halo.couleur), phase: sc.phase }));
     this.etat2 = etatDissolution(this.plan, 0);
-    this.extremites = new Float32Array(nM * 12);
 
     if (rendu) {
       this.lotSurface = rendu.creerLot(this.spheresSurface);
       this.lotCristal = rendu.creerLot(this.spheresCristal, { dynamique: true });
       this.lotO = rendu.creerLot(this.spheresO, { dynamique: true });
       this.lotH = rendu.creerLot(this.spheresH, { dynamique: true });
-      this.lotHalo = rendu.creerLot(this.spheresHalo, { dynamique: true, halo: true });
-      const cO = couleurRvb(eau.couleur_O), cH = couleurRvb(eau.couleur_H);
-      this.batons = rendu.creerBatons(phasesEau.flatMap((_, k) => [0, 1].map(() => ({
-        a: [0, 0, 0], b: [0, 0, 0], rayon: eau.rayon_baton_pm, couleurA: cO, couleurB: cH, phase: phasesEau[k],
-      }))), { dynamique: true });
-      rendu.creerAtlas([...Object.values(this.d.especes).map((e) => e.etiquette), 'δ+', 'δ−']);
+      rendu.creerAtlas([...Object.values(this.d.especes).map((e) => e.etiquette), 'δ+', 'δ−', 'O', 'H']);
       this.etiqIons = rendu.creerEtiquettes(this.lotCristal, this.cristal.map((ion, i) => ({ index: i, texte: this.d.especes[ion.espece].etiquette })));
       this.etiqO = rendu.creerEtiquettes(this.lotO, phasesEau.map((_, k) => ({ index: k, texte: 'δ−' })));
       this.etiqH = rendu.creerEtiquettes(this.lotH, this.spheresH.map((_, k) => ({ index: k, texte: 'δ+' })));
-      this.etiqO.seuil = this.etiqH.seuil = 7;
+      // Étiquettes « O » et « H » de l'eau (interrupteur Étiquettes) ; δ+ δ− les remplace quand il est actif.
+      this.etiqNomO = rendu.creerEtiquettes(this.lotO, phasesEau.map((_, k) => ({ index: k, texte: 'O' })));
+      this.etiqNomH = rendu.creerEtiquettes(this.lotH, this.spheresH.map((_, k) => ({ index: k, texte: 'H' })));
+      this.etiqO.seuil = this.etiqH.seuil = this.etiqNomO.seuil = this.etiqNomH.seuil = 7;
     }
 
     this.etapes = [
@@ -140,26 +134,11 @@ export class SceneNaCl {
     if (t2) this.lotCristal.majPositions(this.etat2.ions);
     else if (this.dernierTemps2 !== false) this.lotCristal.majPositions(Float32Array.from(this.spheresCristal.flatMap((s) => s.pos)));
     this.dernierTemps2 = t2;
-    this.lotO.visible = this.lotH.visible = this.batons.visible = this.lotHalo.visible = t2;
+    this.lotO.visible = this.lotH.visible = t2;
     if (!t2) return;
     const e = this.etat2;
     this.lotO.majPositions(e.O);
     this.lotH.majPositions(e.H);
-    this.lotHalo.majPositions(e.ions);
-    const fh = e.fonduHalo;
-    const cleH = fh.reduce((s, v, k) => s + v * (k + 1), 0);
-    if (cleH !== this.cleHalos) {
-      this.cleHalos = cleH;
-      this.lotHalo.definirEtats(Array.from(fh, (v) => [v, 0, 0]));
-    }
-    const x = this.extremites;
-    for (let k = 0; k < this.plan.molecules.length; k++) {
-      for (let h = 0; h < 2; h++) {
-        x.set(e.O.subarray(k * 3, k * 3 + 3), (k * 2 + h) * 6);
-        x.set(e.H.subarray(k * 6 + h * 3, k * 6 + h * 3 + 3), (k * 2 + h) * 6 + 3);
-      }
-    }
-    this.batons.majPositions(x);
     // Visibilité des molécules d'eau (l'eau n'est dessinée que près du grain et autour des ions suivis).
     const f = e.fonduEau;
     const cle = f.reduce((s, v, k) => s + v * (k + 1), 0);
@@ -167,10 +146,10 @@ export class SceneNaCl {
       this.cleFondus = cle;
       this.lotO.definirEtats(Array.from(f, (v) => [v, 0, 0]));
       this.lotH.definirEtats(Array.from(f).flatMap((v) => [[v, 0, 0], [v, 0, 0]]));
-      this.batons.definirFondus(Array.from(f).flatMap((v) => [v, v]));
       const fe = Array.from(f);
-      this.etiqO.fondre(fe);
-      this.etiqH.fondre(fe.flatMap((v) => [v, v]));
+      const fe2 = fe.flatMap((v) => [v, v]);
+      this.etiqO.fondre(fe); this.etiqNomO.fondre(fe);
+      this.etiqH.fondre(fe2); this.etiqNomH.fondre(fe2);
     }
   }
 
@@ -258,7 +237,7 @@ export class SceneNaCl {
   }
 
   // Clic ou toucher sur l'écran : sélection de l'ion le plus proche de l'observateur sous le pointeur.
-  // Au temps 2, l'ion sélectionné est suivi : son trajet est tracé.
+  // Au temps 2, l'ion sélectionné est marqué (anneau sombre).
   cliquer(x, y) {
     if (this.fige || this.camera.largeur > 2e-8) return false;
     const c = this.camera;
@@ -278,6 +257,8 @@ export class SceneNaCl {
   }
 
   get facteurTaille() {
+    // Pendant la dissolution, ions et eau sont à leur vraie taille (eau en représentation compacte).
+    if (this.temps2 && this.d.temps2.tailles_reelles?.valeur) return 1;
     return this.etat.inter.tailles ? 1 : this.d.affichage.facteur_reduction;
   }
 
@@ -339,8 +320,14 @@ export class SceneNaCl {
     if (this.temps2) {
       const { pNa, pCl } = this.cameraAuto(this.etat.tc);
       const t = tempsJoue(this.plan, this.etat.tc);
-      if (pNa > 0) c = melanger(c, positionIon(this.plan, this.plan.suivis['Na+'], t).map((v) => v * PM), pNa);
-      if (pCl > 0) c = melanger(c, positionIon(this.plan, this.plan.suivis['Cl-'], t).map((v) => v * PM), pCl);
+      // La caméra suit une position moyennée sur 4 s : elle ne reproduit pas chaque écart de l'ion.
+      const moyenne = (q) => {
+        let m = [0, 0, 0];
+        for (let k = -4; k <= 4; k++) m = m.map((v, x) => v + positionIon(this.plan, q, Math.max(0, t + k * 0.5))[x] / 9);
+        return m.map((v) => v * PM);
+      };
+      if (pNa > 0) c = melanger(c, moyenne(this.plan.suivis['Na+']), pNa);
+      if (pCl > 0) c = melanger(c, moyenne(this.plan.suivis['Cl-']), pCl);
     }
     // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration (et son trajet).
     const fi = this.etat.fonduIon * lisse(log10(6e-10), log10(2.5e-10), lw);
@@ -417,7 +404,7 @@ export class SceneNaCl {
     const f = this.fondus(c.largeur);
     this.derniersFondus = f;
 
-    // Couche 2D (sous les ions) : décor au temps 1, trajet de l'ion suivi au temps 2.
+    // Couche 2D (sous les ions) : décor du temps 1.
     const ctx = this.ctxMacro;
     const dpr = ecran.dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -426,7 +413,6 @@ export class SceneNaCl {
     if (!this.temps2 && this.etape.type !== 'exploration' && (f.faces > 0.001 || c.largeur > 1e-8)) {
       dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
     }
-    if (this.temps2 && this.etat.suivi) this.dessinerTrajet(ctx);
 
     // Zoom dans l'ion : la boule de l'ion sélectionné s'efface, le schéma (ou le nuage) prend le relais.
     const fa = fondusAtome(c.largeur);
@@ -457,6 +443,7 @@ export class SceneNaCl {
     const delta = this.temps2 && this.etat.inter.avance && this.etat.inter.delta;
     this.etiqIons.opacite = this.etat.inter.etiquettes ? 1 : 0;
     this.etiqO.opacite = this.etiqH.opacite = delta ? 1 : 0;
+    this.etiqNomO.opacite = this.etiqNomH.opacite = this.etat.inter.etiquettes && !delta ? 1 : 0;
     r.dessiner({
       base: c.base,
       centrePm: c.centre.map((v) => v / PM),
@@ -469,25 +456,6 @@ export class SceneNaCl {
       profondeurPm: 4e4,
       brume: [-0.3 * c.largeur / PM, 0.5 * c.largeur / PM, 0.55],
     });
-  }
-
-  // Trajet de l'ion suivi, depuis son départ du cristal (temps 2).
-  dessinerTrajet(ctx) {
-    const i = this.etat.selection;
-    const t0 = this.plan.ions[i].tDepart, t1 = Math.min(this.etat.tc, this.plan.ch.fin_simulation);
-    if (t1 <= t0) return;
-    const c = this.camera;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(192,57,43,0.85)';
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([6, 5]);
-    ctx.beginPath();
-    for (let t = t0, k = 0; t <= t1 + 1e-9; t += Math.max(0.05, (t1 - t0) / 200), k++) {
-      const p = c.projeter(positionIon(this.plan, i, Math.min(t, t1)).map((v) => v * PM));
-      if (k) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
-    }
-    ctx.stroke();
-    ctx.restore();
   }
 
   majFonduSurface(v) {

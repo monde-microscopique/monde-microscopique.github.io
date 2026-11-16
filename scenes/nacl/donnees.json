@@ -206,8 +206,7 @@
    "rayon_H_pm": 120,
    "source_rayons": "rayons de Van der Waals (Bondi), de mémoire, à contrôler CRM",
    "couleur_O": "#FF0D0D",
-   "couleur_H": "#FFFFFF",
-   "rayon_baton_pm": 40
+   "couleur_H": "#FFFFFF"
   },
   "cortege": {
    "Na+": {
@@ -249,30 +248,31 @@
    ],
    "vitesse_errant_pm_s": 160,
    "debut_dissolution": 37,
-   "fin_dissolution": 72,
+   "fin_dissolution": 82,
    "delai_surface_s": 1.5,
    "effacement_cortege_s": [
     1.2,
     1.5
    ],
-   "fin_simulation": 150,
+   "fin_simulation": 170,
    "boucle_s": 50
   },
   "diffusion": {
-   "pas_s": 0.25,
-   "ecart_pm": 42,
-   "derive_pm_s": 30,
-   "derive_pres_pm_s": 180,
-   "detachement_pas": 4,
-   "detachement_pm": 620,
-   "detachement_suivi_pas": 12,
-   "detachement_suivi_pm": 900,
-   "distance_ions_pm": 650,
-   "distance_suivi_pm": 900,
-   "distance_cristal_pm": 520,
-   "distance_cristal_suivi_pm": 850,
-   "rayon_max_nm": 4.0,
-   "source": "choix de l'exécutant : marche au hasard tirée une fois pour toutes (graine fixe), sans forces"
+   "pas_s": 0.5,
+   "ecart_pm": 38,
+   "derive_pm_s": 25,
+   "derive_pres_pm_s": 400,
+   "detachement_pas": 5,
+   "detachement_pm": 1000,
+   "detachement_suivi_pas": 8,
+   "detachement_suivi_pm": 1250,
+   "distance_ions_pm": 950,
+   "distance_suivi_pm": 950,
+   "distance_cristal_pm": 950,
+   "distance_cristal_suivi_pm": 1200,
+   "rayon_max_nm": 5.0,
+   "lissage": true,
+   "source": "choix de l'exécutant : marche au hasard tirée une fois pour toutes (graine fixe), lissée, sans forces"
   },
   "eau_libre": {
    "maximum": 100,
@@ -282,98 +282,91 @@
     950
    ],
    "ecart_surface_pm": 560,
-   "ecart_libres_pm": 560,
+   "ecart_libres_pm": 600,
    "ecart_eau_surface_pm": 480,
-   "distance_ion_pm": 600,
+   "distance_ion_pm": 900,
    "distance_suivi_pm": 900,
    "agitation_pm": 60,
-   "source": "décision de Roger du 16.11.2026 : une centaine de molécules au plus autour du grain"
-  },
-  "halo": {
-   "rayon_pm": 340,
-   "couleur": "#3D7CC9",
-   "apparition_s": [
-    0.6,
-    1.8
-   ],
-   "source": "choix de l'exécutant : rayon proche de l'encombrement du cortège dessiné (Na⁺–O 240 pm + molécule d'eau)"
+   "source": "décision de Roger du 16.11.2026 : une centaine de molécules au plus autour du grain",
+   "repousse_pm": 800,
+   "ecart_chemin_pm": 450
   },
   "camera": [
    [
     0,
-    5e-09,
+    6.5e-09,
     0,
     0
    ],
    [
     8,
-    5e-09,
+    6.5e-09,
     0,
     0
    ],
    [
     11,
-    4.2e-09,
+    5.8e-09,
     0.5,
     0
    ],
    [
     15,
-    4.4e-09,
-    0.65,
+    6e-09,
+    0.7,
     0
    ],
    [
     20,
-    4.6e-09,
-    0.65,
+    6.2e-09,
+    0.7,
     0
    ],
    [
     22,
-    4.8e-09,
+    6.5e-09,
     0.35,
     0
    ],
    [
     25,
-    4.4e-09,
+    6e-09,
     0,
     0.5
    ],
    [
     29,
-    4.6e-09,
+    6.2e-09,
     0,
-    0.65
+    0.7
    ],
    [
     34,
-    4.6e-09,
+    6.2e-09,
     0,
-    0.65
+    0.7
    ],
    [
     36,
-    5e-09,
+    6.6e-09,
     0,
     0.35
    ],
    [
     40,
-    5.5e-09,
+    7e-09,
     0,
     0
    ],
    [
-    58,
-    8.5e-09,
+    62,
+    1.2e-08,
     0,
     0
    ],
    [
-    76,
-    1.1e-08,
+    88,
+    1.7e-08,
     0,
     0
    ]
@@ -417,15 +410,15 @@
     "type": "choregraphie",
     "titre": "etape-dissolution-graduelle",
     "debut": 36,
-    "fin": 76,
+    "fin": 88,
     "message": "message-dissolution-graduelle"
    },
    {
     "id": "solution",
     "type": "choregraphie",
     "titre": "etape-solution",
-    "debut": 76,
-    "fin": 88,
+    "debut": 88,
+    "fin": 100,
     "continu": true,
     "message": "message-solution",
     "message_avance": "message-solution-avance"
@@ -434,8 +427,12 @@
     "id": "mise-en-commun",
     "type": "question",
     "texte": "question-mise-en-commun",
-    "t": 88
+    "t": 100
    }
-  ]
+  ],
+  "tailles_reelles": {
+   "valeur": true,
+   "source": "décision de Roger du 16.11.2026 : eau en représentation compacte, donc ions et eau à leur vraie taille pendant la dissolution"
+  }
  }
 }

@@ -17,7 +17,7 @@ page.on('pageerror', (e) => console.log('erreur page :', e.message));
 await page.goto(url + `?brouillon${mode2d ? '&2d' : ''}#nacl/question-2`);
 await page.waitForFunction(() => window.__monde && window.__monde.pret);
 const instants = [['question-2', 0], ['grain-dans-eau', 1], ['grain-dans-eau', 7], ['cation-solvate', 11], ['cation-solvate', 14], ['cation-solvate', 19],
-  ['anion-solvate', 27], ['anion-solvate', 33], ['dissolution-graduelle', 45], ['dissolution-graduelle', 60], ['dissolution-graduelle', 70], ['solution', 85]];
+  ['anion-solvate', 27], ['anion-solvate', 33], ['dissolution-graduelle', 45], ['dissolution-graduelle', 60], ['dissolution-graduelle', 75], ['solution', 95]];
 for (const [id, t] of instants) {
   const i = await page.evaluate((id) => window.__monde.scene.etapes.findIndex((e) => e.id === id), id);
   await page.locator('.pastille').nth(i).click();

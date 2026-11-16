@@ -220,7 +220,7 @@ try {
   // Solution : compteurs et équation.
   const iSol = await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'solution'));
   await page.locator('.pastille').nth(iSol).click();
-  await page.evaluate(() => { const s = window.__monde.scene; s.etat.tc = 80; s.appliquerTemps(); });
+  await page.evaluate(() => { const s = window.__monde.scene; s.etat.tc = 92; s.appliquerTemps(); });
   await page.keyboard.press('c');
   await page.keyboard.press('q');
   await page.waitForTimeout(150);
@@ -236,9 +236,14 @@ try {
   await page.keyboard.press('a');
   verifier('δ+ δ− visible au niveau avancé', await page.locator('.inter').nth(8).isVisible());
   await page.keyboard.press('a');
-  // Halos autour des ions dissous (solution)
-  const halos = await page.evaluate(() => { const s = window.__monde.scene; return { visible: s.lotHalo.visible, n: Array.from(s.etat2.fonduHalo).filter((f) => f < 0.5).length }; });
-  verifier('solution : un halo autour de chaque ion dissous (sauf les 2 ions suivis)', halos.visible && halos.n === 214, JSON.stringify(halos));
+  // Solution : chaque ion avec ses 6 molécules d'eau, en représentation compacte (vraies tailles).
+  const sol = await page.evaluate(() => { const s = window.__monde.scene; return { eau: Array.from(s.etat2.fonduEau).filter((f) => f < 0.5).length, facteur: s.facteurTaille, tailles: document.querySelectorAll('.inter')[3].hidden }; });
+  verifier('solution : 6 molécules d\'eau par ion, eau et ions à leur vraie taille, « tailles réelles » masqué', sol.eau >= 1295 && sol.facteur === 1 && sol.tailles, JSON.stringify(sol));
+  // Étiquettes « O » et « H » sur l'eau.
+  await page.keyboard.press('e');
+  const etiq = await page.evaluate(() => { const s = window.__monde.scene; return [s.etiqNomO.opacite, s.etiqNomH.opacite, s.etiqIons.opacite]; });
+  verifier('étiquettes : aussi sur l\'eau (O et H)', etiq.every((x) => x === 1), JSON.stringify(etiq));
+  await page.keyboard.press('e');
   // Suivre l'ion qui se solvate (étapes 2 et 3)
   for (const [id, esp] of [['cation-solvate', 'Na+'], ['anion-solvate', 'Cl-']]) {
     const iE = await page.evaluate((x) => window.__monde.scene.etapes.findIndex((e) => e.id === x), id);
@@ -284,7 +289,7 @@ try {
     for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 0) n++;
     return n;
   });
-  verifier('mode 2D : la dissolution est dessinée (ions, eau, bâtons, halos)', pixels2 > 100, String(pixels2));
+  verifier('mode 2D : la dissolution est dessinée (ions et eau)', pixels2 > 100, String(pixels2));
   await page.goto(url + '?brouillon&2d#nacl/reseau');
   await page.reload();
   await attendre(page);
