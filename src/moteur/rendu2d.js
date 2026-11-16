@@ -22,6 +22,23 @@ function spriteSphere(rvb) {
   return c;
 }
 
+// Halo : disque translucide plus dense vers le bord.
+function spriteHalo(rvb) {
+  const c = document.createElement('canvas');
+  c.width = c.height = TAILLE_SPRITE;
+  const ctx = c.getContext('2d');
+  const r = TAILLE_SPRITE / 2;
+  const [R, V, B] = rvb.map((x) => Math.round(x * 255));
+  const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, `rgba(${R},${V},${B},0.035)`);
+  g.addColorStop(0.55, `rgba(${R},${V},${B},0.04)`);
+  g.addColorStop(0.95, `rgba(${R},${V},${B},0.19)`);
+  g.addColorStop(1, `rgba(${R},${V},${B},0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(r, r, r, 0, Math.PI * 2); ctx.fill();
+  return c;
+}
+
 const rgb = (c) => `rgb(${c.map((v) => Math.round(v * 255)).join(',')})`;
 
 class Lot2D {
@@ -82,9 +99,10 @@ export class Rendu2D {
 
   creerLot(spheres, options = {}) {
     const lot = new Lot2D(spheres, !!options.dynamique);
+    lot.halo = !!options.halo;
     for (const s of spheres) {
-      const cle = s.couleur.join(',');
-      if (!this.sprites.has(cle)) this.sprites.set(cle, spriteSphere(s.couleur));
+      const cle = (lot.halo ? 'halo:' : '') + s.couleur.join(',');
+      if (!this.sprites.has(cle)) this.sprites.set(cle, lot.halo ? spriteHalo(s.couleur) : spriteSphere(s.couleur));
     }
     this.lots.push(lot);
     return lot;
@@ -139,12 +157,13 @@ export class Rendu2D {
         const s = lot.spheres[i];
         const e = lot.etats[i];
         if (e[0] >= 0.98) continue;
-        const r = s.rayon * vue.facteur * k;
+        const r = s.rayon * (lot.halo ? 1 : vue.facteur) * k;
         if (r < 0.3) continue;
         const p = lot.positions;
         const [x, y, z] = proj(p[i * 3], p[i * 3 + 1], p[i * 3 + 2], s.phase);
         if (x < -r || x > l + r || y < -r || y > h + r) continue;
-        liste.push({ type: 's', x, y, z, r, s, e, i, jeux });
+        if (lot.halo) liste.push({ type: 'h', x, y, z: z + 1e-3, r, s, e });
+        else liste.push({ type: 's', x, y, z, r, s, e, i, jeux });
       }
     }
     for (const lot of this.lotsBatons) {
@@ -170,6 +189,11 @@ export class Rendu2D {
         ctx.beginPath(); ctx.moveTo(p.a[0], p.a[1]); ctx.lineTo(mx, my); ctx.stroke();
         ctx.strokeStyle = rgb(p.bt.couleurB.map((v, q) => v + (vue.fond[q] - v) * voile));
         ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(p.c[0], p.c[1]); ctx.stroke();
+        continue;
+      }
+      if (p.type === 'h') {
+        ctx.globalAlpha = (1 - p.e[0]) * (1 - 0.6 * brume(p.z));
+        ctx.drawImage(this.sprites.get('halo:' + p.s.couleur.join(',')), p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
         continue;
       }
       ctx.globalAlpha = 1 - p.e[0];

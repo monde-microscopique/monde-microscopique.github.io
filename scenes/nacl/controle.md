@@ -4,22 +4,23 @@ Ce fichier se modifie comme les textes (Markdown simple).
 -->
 
 ## Ce qui est à relire dans cette livraison
-Le **temps 1** seulement : la question 1, le zoom continu de la salière aux ions, l'exploration du cristal. La dissolution (temps 2) viendra ensuite.
+Le **temps 2 refait** (dissolution, décisions du 16.11.2026, fiche §12). Le temps 1 est accepté et n'a pas changé.
 
 Mode d'emploi du test : `docs/tester-une-scene.md` dans le dépôt.
 
-## Nouveautés de cette version (16.11.2026) : le temps 2, la dissolution
-- Étapes 4 à 11 : question 2, les 6 étapes de la fiche, mise en commun « Où est passé le sel ? ».
-- Chaque étape se joue toute seule (Lecture / Pause), on peut revenir en arrière et rejouer.
-- Bécher dans l'encart : le grain tombe, rétrécit avec la dissolution, puis disparaît.
-- Interrupteurs **Équation** (touche Q) et **δ+ δ−** (touche D, au niveau avancé seulement).
-- Clic sur un ion : son trajet est tracé ; aux étapes 3 et 4, le premier ion qui part est suivi automatiquement.
+## Nouveautés de cette version (16.11.2026) : le temps 2 sur le modèle de la diffusion
+- Étapes 4 à 10 : question 2 ; 1. le grain dans l'eau ; 2. un Na⁺ se détache ; 3. un Cl⁻ se détache ; 4. le grain se dissout ; 5. la solution ; mise en commun « Où est passé le sel ? ».
+- **L'eau est là dès le départ** : 100 molécules autour du cristal, en agitation ; celles qui touchent le cristal s'orientent pendant l'étape 1.
+- **Un ion à la fois** : un Na⁺ de surface (étape 2), puis un Cl⁻ de surface (étape 3) se détachent avec l'eau qui les touchait ; leur cortège se complète (6 molécules) ; ils diffusent ; de temps en temps, une molécule du cortège est remplacée (échanges lents).
+- **Diffusion** : chaque ion dissous fait une marche au hasard (tirée une fois pour toutes : même film à chaque lecture), avec un léger éloignement du cristal ; aucun ion ne revient dans le cristal.
+- **Halo** : autour des ions qui s'éloignent, un halo bleu remplace les molécules d'eau ; seuls les deux ions suivis gardent leurs molécules dessinées.
+- Les places libérées à la surface sont reprises par de l'eau venue de l'extérieur, au bout de 1,5 s.
 
 ## Points à regarder en priorité (temps 2)
-1. **L'orientation de l'eau** (étape 2, zoomer vers 2 nm) : O vers Na⁺, un H aligné vers Cl⁻.
-2. **Le départ du premier ion** (étapes 3 et 4) : se voit-il bien ?
-3. **Le démontage** (étape 5) : coins, arêtes, couches ; lisible en projection ?
-4. **La solution** (étape 6) : 216 ions hydratés vus de loin (17 nm) ; assez lisible, ou faut-il moins d'ions ?
+1. **Étapes 2 et 3** : voit-on qu'un ion se détache avec son eau, puis se déplace au hasard ? La vitesse de diffusion te convient-elle ?
+2. **Le halo** (étapes 4 et 5) : lisible, ou trompeur (on pourrait le prendre pour une sphère dure, ou pour une « bulle d'eau ») ?
+3. **La quantité d'eau** à l'étape 1 : 100 molécules, assez ou trop ?
+4. **Le rythme du grain qui se dissout** (étape 4, 35 s) : irrégulier, coins et arêtes d'abord.
 5. **Les textes** des étapes (standard et avancé) : rédigés par l'exécutant, à corriger.
 
 ## Grille de relecture
@@ -55,8 +56,12 @@ Mode d'emploi du test : `docs/tester-une-scene.md` dans le dépôt.
 | Rayon des bâtons O–H | 40 pm, réduit du même facteur (11 pm à l'écran) | **choix de l'exécutant** (lisibilité) |
 | Cortège de Na⁺ | 6 H₂O en octaèdre, O à 240 pm, H vers l'extérieur | décision de Roger du 15.11.2026 |
 | Cortège de Cl⁻ | 6 H₂O en octaèdre, H à 230 pm, Cl⁻···H–O aligné (O à 326 pm) | décision de Roger (pseudo-octaèdre dessiné comme un octaèdre régulier) |
-| Durée du film | question 2, puis 56 s de dissolution, solution en mouvement continu | **choix de l'exécutant** |
-| Solution | ions répartis entre 2,4 et 6,4 nm du centre, à au moins 1,1 nm l'un de l'autre | **choix de l'exécutant** (pas une concentration réelle) |
+| Durée du film | question 2 ; étape 1 : 8 s ; étapes 2 et 3 : 14 s chacune ; étape 4 : 40 s ; solution en mouvement continu | **choix de l'exécutant** |
+| Eau dessinée près du grain | 100 molécules au plus, espacées d'au moins 560 pm (O–O) ; une couche de 650 à 950 pm du cristal, plus l'eau de surface | **nombre : décision de Roger du 16.11.2026 ; espacements : choix de l'exécutant** |
+| Diffusion | pas de 0,25 s ; déplacement au hasard de 42 pm par axe et par pas (écart type) ; éloignement de 30 pm/s (180 pm/s près du cristal) ; ions dans une sphère de 4 nm de rayon | **choix de l'exécutant** (film ralenti ; pas une vitesse réelle) |
+| Distances minimales | ions dissous : 650 pm entre eux, 520 pm du cristal ; ions suivis : 900 pm des autres, 850 pm du cristal | **choix de l'exécutant** (pour que les cortèges ne se chevauchent pas) |
+| Halo | rayon 340 pm, bleu translucide, apparaît 0,6 s après le départ | **choix de l'exécutant** (encombrement du cortège dessiné ; pas un « rayon hydraté » mesuré) |
+| Échanges dans le cortège | toutes les 6 à 9 s, une molécule s'en va, une autre prend sa place | **rythme : choix de l'exécutant** |
 
 pm = picomètre (10⁻¹² m) ; fm = femtomètre (10⁻¹⁵ m) ; µm = micromètre (10⁻⁶ m) ; A = nombre de masse.
 
@@ -70,11 +75,12 @@ pm = picomètre (10⁻¹² m) ; fm = femtomètre (10⁻¹⁵ m) ; µm = micromè
 7. **Zoom dans l'ion** : le schéma de Bohr a la taille de la boule dessinée (pas à l'échelle, c'est écrit). Conventions reprises de ton artefact « Lire le tableau périodique » : rayons des couches 62 : 98 : 134, électrons sur 4 positions, célibataires puis paires, couche externe soulignée, noyau compact (protons rouges, neutrons gris) annoté « p⁺ / n⁰ ». Le noyau est dessiné à sa vraie taille, d'où le repère « le noyau est ici » tant qu'il est invisible.
 8. **Nuage électronique (avancé)** : dégradé plus dense au centre, très dilué vers l'extérieur ; il reste visible en zoomant (formulation du « vide » validée le 15.11.2026).
 9. **Maille** : choisie au centre du cube de 216 ions ; volume teinté bleu, sans trait.
-11. **Ordre de départ** : toujours un ion qui a le moins de voisins restants (les 8 coins d'abord, puis les arêtes, puis couche après couche), en alternant Na⁺ et Cl⁻ (écart d'au plus 1 à tout moment), et en évitant de faire partir deux voisins à la suite.
-12. **Eau** : seules les molécules du cortège sont dessinées ; elles apparaissent en arrivant vers leur ion ; les 48 premières entourent déjà le cristal à la question 2 (« cristal entouré d'eau immobile »).
-13. **Premier ion** : un Cl⁻ du coin tourné vers l'élève ; il part plus lentement que les autres, la caméra s'en approche aux étapes 2 à 4.
-14. **Compteurs au temps 2** : une ligne « Encore dans le cristal » a été ajoutée sous 108 Na⁺ / 108 Cl⁻ / charge 0.
-15. **Tailles réelles pendant la dissolution** : avec les boules réduites, rien ne se chevauche (contrôlé) ; avec l'interrupteur « tailles réelles », des particules peuvent se recouvrir brièvement pendant le démontage.
+11. **Ordre de départ** : le Na⁺ suivi, puis le Cl⁻ suivi (deux coins vus de profil depuis l'angle de départ), puis toujours un ion qui a le moins de voisins restants (coins, arêtes, puis couche après couche), Na⁺ et Cl⁻ en nombres égaux (écart d'au plus 1), en évitant deux voisins à la suite ; instants de départ tirés au hasard (rythme irrégulier).
+12. **Eau de surface** : toutes les places de surface ne sont pas occupées (une sur deux environ), pour ne pas saturer l'écran ; l'eau libre est une couche clairsemée autour du cristal restant ; elle disparaît quand le cristal a disparu.
+13. **Caméra** : elle se rapproche de l'ion suivi aux étapes 2 et 3, puis s'éloigne jusqu'à 11 nm pour la solution.
+14. **Compteurs au temps 2** : une ligne « Encore dans le cristal » sous 108 Na⁺ / 108 Cl⁻ / charge 0.
+15. **Tailles réelles pendant la dissolution** : avec les boules réduites, rien ne se chevauche (contrôlé) ; avec l'interrupteur « tailles réelles », des particules peuvent se recouvrir.
+16. **Après 2 min 30 de film**, la solution rejoue sa dernière minute à l'envers puis à l'endroit (une marche au hasard jouée à l'envers reste une marche au hasard).
 10. **Exploration** : dézoom possible jusqu'à 15 nm (demande de Roger du 16.11.2026) ; le cube de 216 ions reste seul, sans le reste du grain, et l'instrument affiché est « modèle ».
 
 ## Écart par rapport à la fiche

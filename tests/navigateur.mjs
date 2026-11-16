@@ -192,7 +192,7 @@ try {
   const t0 = (await etat()).tc;
   await page.waitForTimeout(1200);
   const e1 = await etat();
-  verifier('étape 1 : la chorégraphie se joue toute seule', e1.etape === 'eau-arrive' && e1.tc > t0 + 0.5, JSON.stringify({ t0, tc: e1.tc }));
+  verifier('étape 1 : la chorégraphie se joue toute seule', e1.etape === 'grain-dans-eau' && e1.tc > t0 + 0.5, JSON.stringify({ t0, tc: e1.tc }));
   await page.keyboard.press(' ');
   const tPause = (await etat()).tc;
   await page.waitForTimeout(500);
@@ -208,7 +208,7 @@ try {
       const c = s.compteurs();
       let pire = 0;
       const E = s.etat2;
-      for (let k = 0; k < s.plan.eaux.length; k++) {
+      for (let k = 0; k < s.plan.molecules.length; k++) {
         const o = [E.O[k * 3], E.O[k * 3 + 1], E.O[k * 3 + 2]];
         for (let h = 0; h < 2; h++) pire = Math.max(pire, Math.abs(Math.hypot(E.H[k * 6 + h * 3] - o[0], E.H[k * 6 + h * 3 + 1] - o[1], E.H[k * 6 + h * 3 + 2] - o[2]) - 96));
       }
@@ -220,7 +220,7 @@ try {
   // Solution : compteurs et équation.
   const iSol = await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'solution'));
   await page.locator('.pastille').nth(iSol).click();
-  await page.evaluate(() => { const s = window.__monde.scene; s.etat.tc = 66; s.appliquerTemps(); });
+  await page.evaluate(() => { const s = window.__monde.scene; s.etat.tc = 80; s.appliquerTemps(); });
   await page.keyboard.press('c');
   await page.keyboard.press('q');
   await page.waitForTimeout(150);
@@ -236,11 +236,16 @@ try {
   await page.keyboard.press('a');
   verifier('δ+ δ− visible au niveau avancé', await page.locator('.inter').nth(8).isVisible());
   await page.keyboard.press('a');
-  // Suivre une particule (étape 4)
-  const iEnt = await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'ion-entoure'));
-  await page.locator('.pastille').nth(iEnt).click();
-  const suivi = await page.evaluate(() => { const s = window.__monde.scene; return { suivi: s.etat.suivi, sel: s.etat.selection, premier: s.plan.ordre[0] }; });
-  verifier('étape 4 : le premier ion parti est suivi (trajet tracé)', suivi.suivi && suivi.sel === suivi.premier);
+  // Halos autour des ions dissous (solution)
+  const halos = await page.evaluate(() => { const s = window.__monde.scene; return { visible: s.lotHalo.visible, n: Array.from(s.etat2.fonduHalo).filter((f) => f < 0.5).length }; });
+  verifier('solution : un halo autour de chaque ion dissous (sauf les 2 ions suivis)', halos.visible && halos.n === 214, JSON.stringify(halos));
+  // Suivre l'ion qui se solvate (étapes 2 et 3)
+  for (const [id, esp] of [['cation-solvate', 'Na+'], ['anion-solvate', 'Cl-']]) {
+    const iE = await page.evaluate((x) => window.__monde.scene.etapes.findIndex((e) => e.id === x), id);
+    await page.locator('.pastille').nth(iE).click();
+    const suivi = await page.evaluate((x) => { const s = window.__monde.scene; return { suivi: s.etat.suivi, sel: s.etat.selection, attendu: s.plan.suivis[x] }; }, esp);
+    verifier(`étape « ${id} » : le ${esp === 'Na+' ? 'Na⁺' : 'Cl⁻'} qui se solvate est marqué et suivi`, suivi.suivi && suivi.sel === suivi.attendu, JSON.stringify(suivi));
+  }
   // Mise en commun : figée
   await page.locator('.pastille').nth(nbEtapes - 1).click();
   verifier('mise en commun : question affichée, scène figée', (await etat()).etape === 'mise-en-commun' && await page.locator('.question').isVisible());
@@ -269,7 +274,7 @@ try {
 
   console.log('Affichage 2D de secours');
   page = await nouvellePage();
-  await page.goto(url + '?brouillon&2d#nacl/demontage');
+  await page.goto(url + '?brouillon&2d#nacl/dissolution-graduelle');
   await attendre(page);
   await page.waitForTimeout(400);
   const pixels2 = await page.evaluate(() => {
@@ -279,7 +284,7 @@ try {
     for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 0) n++;
     return n;
   });
-  verifier('mode 2D : la dissolution est dessinée (ions, eau, bâtons)', pixels2 > 100, String(pixels2));
+  verifier('mode 2D : la dissolution est dessinée (ions, eau, bâtons, halos)', pixels2 > 100, String(pixels2));
   await page.goto(url + '?brouillon&2d#nacl/reseau');
   await page.reload();
   await attendre(page);

@@ -74,6 +74,23 @@ void main() {
   ${profondeur ? 'gl_FragDepthEXT = clamp(((vZ - vR * n.z) / uProf) * 0.5 + 0.5, 0.0, 1.0);' : ''}
 }`;
 
+// Halo : disque translucide plus dense vers le bord (une coquille vue de face). Sert à représenter,
+// autour d'un ion, un cortège d'eau qui n'est pas dessiné. Il n'écrit pas dans la profondeur.
+const FS_HALO = `
+precision mediump float;
+uniform vec3 uBrume;
+varying vec2 vUV;
+varying float vZ, vR, vRpx;
+varying vec3 vCouleur, vEtat;
+void main() {
+  float r = length(vUV);
+  if (r > 1.0) discard;
+  float a = (0.035 + 0.16 * smoothstep(0.55, 0.97, r)) * (1.0 - smoothstep(0.95, 1.0, r)) * (1.0 - vEtat.x);
+  a *= 1.0 - smoothstep(uBrume.x, uBrume.y, vZ) * uBrume.z * 0.6;
+  if (a < 0.004) discard;
+  gl_FragColor = vec4(vCouleur * a, a);
+}`;
+
 // Bâton : aCoin.x = position le long du bâton (0 en A, 1 en B), aCoin.y = côté (−1 ou 1).
 const VS_BATON = `
 attribute vec3 aA;
@@ -414,6 +431,7 @@ export class Rendu {
     const ext = gl.getExtension('EXT_frag_depth');
     this.profondeurExacte = !!ext;
     this.prSphere = programme(gl, VS_SPHERE, FS_SPHERE(!!ext));
+    this.prHalo = programme(gl, VS_SPHERE, FS_HALO);
     this.prBaton = programme(gl, VS_BATON, FS_BATON(!!ext));
     this.prEtiq = programme(gl, VS_ETIQ, FS_ETIQ);
     this.prBoite = programme(gl, VS_BOITE, FS_BOITE);
@@ -424,9 +442,11 @@ export class Rendu {
     this.atlas = null;
   }
 
+  // options.halo : sphères dessinées en halos translucides, de rayon fixe (non réduit par le facteur).
   creerLot(spheres, options = {}) {
     const lot = new Lot(this.gl, spheres, !!options.dynamique);
     lot.spheres = spheres;
+    lot.halo = !!options.halo;
     this.lots.push(lot);
     return lot;
   }
@@ -559,14 +579,9 @@ export class Rendu {
     }
     detacher(pb);
 
-    const ps = this.prSphere;
-    gl.useProgram(ps.p);
-    communs(ps);
-    gl.depthMask(true);
-    for (const lot of this.lots) {
-      if (!lot.visible || !lot.n) continue;
+    const dessinerLot = (pr, lot) => {
       lot.trier(vue.base.avant);
-      const a = ps.attributs;
+      const a = pr.attributs;
       gl.bindBuffer(gl.ARRAY_BUFFER, lot.fixe);
       const T = 9 * 4;
       attacher(a.aCoin, 2, T, 0); attacher(a.aRayon, 1, T, 8); attacher(a.aCouleur, 3, T, 12); attacher(a.aPhase, 3, T, 24);
@@ -576,8 +591,26 @@ export class Rendu {
       attacher(a.aEtat, 3, 12, 0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, lot.indices);
       gl.drawElements(gl.TRIANGLES, lot.n * 6, gl.UNSIGNED_SHORT, 0);
-    }
+    };
+    const ps = this.prSphere;
+    gl.useProgram(ps.p);
+    communs(ps);
+    gl.depthMask(true);
+    for (const lot of this.lots) if (lot.visible && lot.n && !lot.halo) dessinerLot(ps, lot);
     detacher(ps);
+
+    // Halos après les sphères, sans écrire la profondeur : un ion reste net dans son halo.
+    const halos = this.lots.filter((lot) => lot.visible && lot.n && lot.halo);
+    if (halos.length) {
+      const ph = this.prHalo;
+      gl.useProgram(ph.p);
+      communs(ph);
+      gl.uniform1f(ph.uniformes.uFacteur, 1);
+      gl.depthMask(false);
+      for (const lot of halos) dessinerLot(ph, lot);
+      detacher(ph);
+      gl.depthMask(true);
+    }
 
     if (this.boite) {
       const pbx = this.prBoite;

@@ -1,5 +1,6 @@
 // Scène NaCl : temps 1 (question, zoom continu de la salière aux ions, exploration du réseau)
-// et temps 2 (question, dissolution chorégraphiée en 6 étapes, mise en commun).
+// et temps 2 (question, dissolution en 5 étapes : le grain dans l'eau, un Na⁺ puis un Cl⁻ se solvatent,
+// le grain se dissout, la solution ; puis mise en commun).
 // Ce module ne crée pas d'interface : il calcule l'état et dessine. L'interface (src/interface) le pilote.
 
 import { Camera } from '../../moteur/camera.js';
@@ -7,7 +8,7 @@ import { baseDepuisVisee, interpolerBase, tourner, melanger, lisse, borner, coul
 import { genererCristal, genererSurface, voisins, bilan, aleatoire } from './reseau.js';
 import { creerDecor, dessinerMacro } from './macro.js';
 import { dessinerAtome, fondusAtome } from './atome.js';
-import { planDissolution, etatDissolution, positionIon } from './dissolution.js';
+import { planDissolution, etatDissolution, positionIon, tempsJoue } from './dissolution.js';
 
 const PM = 1e-12;
 const log10 = Math.log10;
@@ -46,24 +47,29 @@ export class SceneNaCl {
     // Temps 2 : plan de la dissolution et molécules d'eau (corps rigides : même phase de vibration pour O et H).
     this.plan = planDissolution(this.d, this.cristal, this.voisins);
     const eau = this.d.temps2.eau;
-    const phasesEau = this.plan.eaux.map(() => phase());
-    this.spheresO = this.plan.eaux.map((_, k) => ({ pos: [0, 0, 0], rayon: eau.rayon_O_pm, couleur: couleurRvb(eau.couleur_O), phase: phasesEau[k] }));
-    this.spheresH = this.plan.eaux.flatMap((_, k) => [0, 1].map(() => ({ pos: [0, 0, 0], rayon: eau.rayon_H_pm, couleur: couleurRvb(eau.couleur_H), phase: phasesEau[k] })));
+    const nM = this.plan.molecules.length;
+    const phasesEau = this.plan.molecules.map(() => phase());
+    this.spheresO = phasesEau.map((ph) => ({ pos: [0, 0, 0], rayon: eau.rayon_O_pm, couleur: couleurRvb(eau.couleur_O), phase: ph }));
+    this.spheresH = phasesEau.flatMap((ph) => [0, 1].map(() => ({ pos: [0, 0, 0], rayon: eau.rayon_H_pm, couleur: couleurRvb(eau.couleur_H), phase: ph })));
+    // Halos (cortège d'eau non dessiné des ions dissous) : mêmes phases de vibration que les ions.
+    const halo = this.d.temps2.halo;
+    this.spheresHalo = this.spheresCristal.map((sc) => ({ pos: sc.pos, rayon: halo.rayon_pm, couleur: couleurRvb(halo.couleur), phase: sc.phase }));
     this.etat2 = etatDissolution(this.plan, 0);
-    this.extremites = new Float32Array(this.plan.eaux.length * 12);
+    this.extremites = new Float32Array(nM * 12);
 
     if (rendu) {
       this.lotSurface = rendu.creerLot(this.spheresSurface);
       this.lotCristal = rendu.creerLot(this.spheresCristal, { dynamique: true });
       this.lotO = rendu.creerLot(this.spheresO, { dynamique: true });
       this.lotH = rendu.creerLot(this.spheresH, { dynamique: true });
+      this.lotHalo = rendu.creerLot(this.spheresHalo, { dynamique: true, halo: true });
       const cO = couleurRvb(eau.couleur_O), cH = couleurRvb(eau.couleur_H);
-      this.batons = rendu.creerBatons(this.plan.eaux.flatMap((_, k) => [0, 1].map(() => ({
+      this.batons = rendu.creerBatons(phasesEau.flatMap((_, k) => [0, 1].map(() => ({
         a: [0, 0, 0], b: [0, 0, 0], rayon: eau.rayon_baton_pm, couleurA: cO, couleurB: cH, phase: phasesEau[k],
       }))), { dynamique: true });
       rendu.creerAtlas([...Object.values(this.d.especes).map((e) => e.etiquette), 'δ+', 'δ−']);
       this.etiqIons = rendu.creerEtiquettes(this.lotCristal, this.cristal.map((ion, i) => ({ index: i, texte: this.d.especes[ion.espece].etiquette })));
-      this.etiqO = rendu.creerEtiquettes(this.lotO, this.plan.eaux.map((_, k) => ({ index: k, texte: 'δ−' })));
+      this.etiqO = rendu.creerEtiquettes(this.lotO, phasesEau.map((_, k) => ({ index: k, texte: 'δ−' })));
       this.etiqH = rendu.creerEtiquettes(this.lotH, this.spheresH.map((_, k) => ({ index: k, texte: 'δ+' })));
       this.etiqO.seuil = this.etiqH.seuil = 7;
     }
@@ -109,8 +115,8 @@ export class SceneNaCl {
       this.etat.tc = e.type === 'question' ? e.t : e.debut;
       if (e.type === 'question') this.camera.base = this.baseDepart;
       if (e.type === 'choregraphie') this.etat.lecture = true;
-      // Étapes 3 et 4 : le premier ion qui part est marqué et suivi.
-      if (e.suivre_premier) { this.etat.selection = this.plan.ordre[0]; this.etat.suivi = true; }
+      // Étapes 2 et 3 : l'ion qui se solvate (un Na⁺, puis un Cl⁻) est marqué et suivi.
+      if (e.suivre) { this.etat.selection = this.plan.suivis[e.suivre]; this.etat.suivi = true; }
       this.etat.largeur = this.largeurAuto(this.etat.tc);
     } else if (e.type === 'question') {
       this.etat.largeur = e.largeur_m;
@@ -134,20 +140,27 @@ export class SceneNaCl {
     if (t2) this.lotCristal.majPositions(this.etat2.ions);
     else if (this.dernierTemps2 !== false) this.lotCristal.majPositions(Float32Array.from(this.spheresCristal.flatMap((s) => s.pos)));
     this.dernierTemps2 = t2;
-    this.lotO.visible = this.lotH.visible = this.batons.visible = t2;
+    this.lotO.visible = this.lotH.visible = this.batons.visible = this.lotHalo.visible = t2;
     if (!t2) return;
     const e = this.etat2;
     this.lotO.majPositions(e.O);
     this.lotH.majPositions(e.H);
+    this.lotHalo.majPositions(e.ions);
+    const fh = e.fonduHalo;
+    const cleH = fh.reduce((s, v, k) => s + v * (k + 1), 0);
+    if (cleH !== this.cleHalos) {
+      this.cleHalos = cleH;
+      this.lotHalo.definirEtats(Array.from(fh, (v) => [v, 0, 0]));
+    }
     const x = this.extremites;
-    for (let k = 0; k < this.plan.eaux.length; k++) {
+    for (let k = 0; k < this.plan.molecules.length; k++) {
       for (let h = 0; h < 2; h++) {
         x.set(e.O.subarray(k * 3, k * 3 + 3), (k * 2 + h) * 6);
         x.set(e.H.subarray(k * 6 + h * 3, k * 6 + h * 3 + 3), (k * 2 + h) * 6 + 3);
       }
     }
     this.batons.majPositions(x);
-    // Visibilité des molécules d'eau (l'eau n'est dessinée qu'autour des espèces d'intérêt).
+    // Visibilité des molécules d'eau (l'eau n'est dessinée que près du grain et autour des ions suivis).
     const f = e.fonduEau;
     const cle = f.reduce((s, v, k) => s + v * (k + 1), 0);
     if (cle !== this.cleFondus) {
@@ -161,22 +174,25 @@ export class SceneNaCl {
     }
   }
 
-  // Caméra de la chorégraphie : largeur du champ et rapprochement vers le premier ion qui part.
+  // Caméra de la chorégraphie : largeur du champ, et rapprochement vers le Na⁺ suivi (poids pNa)
+  // ou vers le Cl⁻ suivi (poids pCl). Points de passage : [t, largeur, pNa, pCl].
   // (L'utilisateur peut zoomer : la largeur choisie par lui est alors gardée jusqu'à l'étape suivante.)
   cameraAuto(tc) {
     const pts = this.d.temps2.camera;
-    if (tc <= pts[0][0]) return { W: pts[0][1], poids: pts[0][2] ?? 0 };
+    const lire = (p) => ({ W: p[1], pNa: p[2] ?? 0, pCl: p[3] ?? 0 });
+    if (tc <= pts[0][0]) return lire(pts[0]);
     for (let k = 1; k < pts.length; k++) {
       if (tc <= pts[k][0]) {
         const u = lisse(pts[k - 1][0], pts[k][0], tc);
+        const a = lire(pts[k - 1]), b = lire(pts[k]);
         return {
-          W: 10 ** (log10(pts[k - 1][1]) + (log10(pts[k][1]) - log10(pts[k - 1][1])) * u),
-          poids: (pts[k - 1][2] ?? 0) + ((pts[k][2] ?? 0) - (pts[k - 1][2] ?? 0)) * u,
+          W: 10 ** (log10(a.W) + (log10(b.W) - log10(a.W)) * u),
+          pNa: a.pNa + (b.pNa - a.pNa) * u,
+          pCl: a.pCl + (b.pCl - a.pCl) * u,
         };
       }
     }
-    const fin = pts[pts.length - 1];
-    return { W: fin[1], poids: fin[2] ?? 0 };
+    return lire(pts[pts.length - 1]);
   }
 
   largeurAuto(tc) { return this.cameraAuto(tc).W; }
@@ -238,7 +254,7 @@ export class SceneNaCl {
 
   // Position actuelle d'un ion (pm), sans la vibration.
   positionActuelle(i) {
-    return this.temps2 ? positionIon(this.plan, i, this.etat.tc) : this.cristal[i].pos;
+    return this.temps2 ? positionIon(this.plan, i, tempsJoue(this.plan, this.etat.tc)) : this.cristal[i].pos;
   }
 
   // Clic ou toucher sur l'écran : sélection de l'ion le plus proche de l'observateur sous le pointeur.
@@ -319,10 +335,12 @@ export class SceneNaCl {
     // En exploration et au temps 2, la vue reste centrée sur le cube, quelle que soit l'échelle.
     const centre = this.etape.type === 'exploration' || this.temps2;
     c = centre ? cristal : melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
-    // Temps 2 : la caméra se rapproche du coin d'où part le premier ion, puis le suit un moment.
+    // Temps 2 : la caméra se rapproche de l'ion qui se solvate, puis le suit un moment.
     if (this.temps2) {
-      const poids = this.cameraAuto(this.etat.tc).poids;
-      if (poids > 0) c = melanger(c, positionIon(this.plan, this.plan.ordre[0], this.etat.tc).map((v) => v * PM), poids);
+      const { pNa, pCl } = this.cameraAuto(this.etat.tc);
+      const t = tempsJoue(this.plan, this.etat.tc);
+      if (pNa > 0) c = melanger(c, positionIon(this.plan, this.plan.suivis['Na+'], t).map((v) => v * PM), pNa);
+      if (pCl > 0) c = melanger(c, positionIon(this.plan, this.plan.suivis['Cl-'], t).map((v) => v * PM), pCl);
     }
     // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration (et son trajet).
     const fi = this.etat.fonduIon * lisse(log10(6e-10), log10(2.5e-10), lw);
@@ -456,7 +474,7 @@ export class SceneNaCl {
   // Trajet de l'ion suivi, depuis son départ du cristal (temps 2).
   dessinerTrajet(ctx) {
     const i = this.etat.selection;
-    const t0 = this.plan.ions[i].tDepart, t1 = this.etat.tc;
+    const t0 = this.plan.ions[i].tDepart, t1 = Math.min(this.etat.tc, this.plan.ch.fin_simulation);
     if (t1 <= t0) return;
     const c = this.camera;
     ctx.save();

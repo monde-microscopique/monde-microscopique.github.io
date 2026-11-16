@@ -96,48 +96,42 @@ Le noyau : des protons et des neutrons, serrés dans une boule de quelques femto
 le noyau est ici, encore trop petit pour être vu
 
 ## question-2
-Le grain est remplacé par un cristal minuscule, entouré d'eau. Prédis, sur papier :
+Le grain est remplacé par un cristal minuscule, plongé dans l'eau. Prédis, sur papier :
 - Comment une molécule d'eau se place-t-elle près d'un Na⁺ ? Près d'un Cl⁻ ?
 - Dessine ce qu'il y a dans l'eau une fois le sel dissous.
 
-## etape-eau-arrive
-L'eau arrive
+## etape-grain-dans-eau
+Le grain dans l'eau
 
-## etape-eau-oriente
-L'eau s'oriente
+## etape-cation-solvate
+Un ion Na⁺ se détache
 
-## etape-premier-ion
-Premier ion arraché
+## etape-anion-solvate
+Un ion Cl⁻ se détache
 
-## etape-ion-entoure
-Ion entouré
-
-## etape-demontage
-Le cristal se démonte
+## etape-dissolution-graduelle
+Le grain se dissout
 
 ## etape-solution
 La solution
 
-## message-eau-arrive
-Le cristal minuscule remplace le grain. Les molécules d'eau bougent sans cesse et heurtent le cristal.
+## message-grain-dans-eau
+Le cristal minuscule est plongé dans l'eau. Les molécules d'eau bougent sans cesse ; celles qui touchent le cristal se tournent : l'oxygène vers un ion Na⁺, un hydrogène vers un ion Cl⁻.
 
-## message-eau-oriente
-Près d'un ion Na⁺, l'oxygène de l'eau se tourne vers l'ion ; près d'un ion Cl⁻, c'est un hydrogène.
+## message-grain-dans-eau-avance
+L'oxygène (δ−) se tourne vers Na⁺, un hydrogène (δ+) vers Cl⁻ : les charges opposées s'attirent. Active « δ+ δ− » pour les voir.
 
-## message-eau-oriente-avance
-L'oxygène (δ−) est attiré par Na⁺, un hydrogène (δ+) par Cl⁻ : les charges opposées s'attirent. Active « δ+ δ− » pour les voir.
+## message-cation-solvate
+Un ion Na⁺ de surface se détache avec l'eau qui le touchait ; d'autres molécules complètent son entourage : 6 molécules, l'oxygène tourné vers l'ion. Il se déplace ensuite au hasard. De temps en temps, une molécule de l'entourage est remplacée par une autre.
 
-## message-premier-ion
-Un ion d'un coin, qui n'a que 3 voisins, quitte le cristal, entouré de molécules d'eau.
+## message-anion-solvate
+Même chose pour un ion Cl⁻ de surface : 6 molécules d'eau l'entourent, un hydrogène tourné vers l'ion.
 
-## message-ion-entoure
-L'ion s'éloigne avec son cortège de 6 molécules d'eau. Clique un ion pour suivre son trajet.
-
-## message-demontage
-Coins, arêtes, puis couche après couche : les ions Na⁺ et Cl⁻ partent en nombres égaux.
+## message-dissolution-graduelle
+Les ions de surface partent un à un, Na⁺ et Cl⁻ en nombres égaux, et l'eau prend leur place : le cristal rétrécit. Autour des ions qui s'éloignent, un halo bleu représente l'eau qui les entoure.
 
 ## message-solution
-Il n'y a plus de cristal : chaque ion, entouré d'eau, se déplace dans la solution. Les compteurs n'ont pas changé.
+Il n'y a plus de cristal : chaque ion, entouré d'eau, se déplace au hasard dans la solution. Les compteurs n'ont pas changé.
 
 ## message-solution-avance
 Pour séparer les ions, il faut vaincre leur attraction ; l'eau la compense en entourant chaque ion. Les compteurs n'ont pas changé.
@@ -154,7 +148,7 @@ Où est passé le sel ?
 - Le film est très ralenti.
 - On ne montre qu'un coin minuscule du grain.
 - Le coin montré à l'échelle des ions est parfait ; un vrai cristal a des défauts (marches, trous, bulles).
-- Dissolution : on ne dessine qu'une petite partie de l'eau, et le cristal minuscule remplace le grain entier.
-- Le film est très ralenti et l'ordre de départ des ions est mis en scène.
+- Dissolution : le cristal minuscule remplace le grain entier, et on ne dessine qu'une petite partie de l'eau (une centaine de molécules près du grain). Autour des ions qui s'éloignent, un halo bleu remplace les molécules d'eau ; seuls les deux ions suivis gardent leurs molécules dessinées.
+- Le film est très ralenti et l'ordre de départ des ions est mis en scène. Leurs déplacements dans l'eau sont tirés au hasard une fois pour toutes : le film est le même à chaque lecture.
 - Le nombre de molécules d'eau autour de chaque ion varie en réalité (ici, toujours 6).
 - Les liaisons entre molécules d'eau ne sont pas montrées.

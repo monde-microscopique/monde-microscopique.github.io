@@ -1,355 +1,441 @@
 {
-  "id": "nacl",
-  "fiche": "monde-micro-fiche-scene-nacl.md (validée par Roger le 15.11.2026)",
-  "type": "B",
-  "mode": "structure",
-  "chapitre": "Milieu aqueux (chap. 8)",
-  "especes": {
-    "Na+": {
-      "element": "Na",
-      "charge": 1,
-      "rayon_pm": 102,
-      "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
-      "couleur": "#AB5CF2",
-      "etiquette": "Na⁺",
-      "couches": [
-        2,
-        8
-      ],
-      "noyau": {
-        "isotope": "²³Na",
-        "protons": 11,
-        "neutrons": 12,
-        "rayon_fm": 3.4,
-        "source": "rayon ≈ 1,2 × A^(1/3) fm, A = 23 (ordre de grandeur)"
-      }
-    },
-    "Cl-": {
-      "element": "Cl",
-      "charge": -1,
-      "rayon_pm": 181,
-      "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
-      "couleur": "#1E9E1E",
-      "etiquette": "Cl⁻",
-      "couches": [
-        2,
-        8,
-        8
-      ],
-      "noyau": {
-        "isotope": "³⁵Cl",
-        "protons": 17,
-        "neutrons": 18,
-        "rayon_fm": 3.9,
-        "source": "rayon ≈ 1,2 × A^(1/3) fm, A = 35 (ordre de grandeur) ; isotope provisoire"
-      }
-    }
+ "id": "nacl",
+ "fiche": "monde-micro-fiche-scene-nacl.md (validée par Roger le 15.11.2026)",
+ "type": "B",
+ "mode": "structure",
+ "chapitre": "Milieu aqueux (chap. 8)",
+ "especes": {
+  "Na+": {
+   "element": "Na",
+   "charge": 1,
+   "rayon_pm": 102,
+   "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
+   "couleur": "#AB5CF2",
+   "etiquette": "Na⁺",
+   "couches": [
+    2,
+    8
+   ],
+   "noyau": {
+    "isotope": "²³Na",
+    "protons": 11,
+    "neutrons": 12,
+    "rayon_fm": 3.4,
+    "source": "rayon ≈ 1,2 × A^(1/3) fm, A = 23 (ordre de grandeur)"
+   }
   },
-  "reseau": {
-    "structure": "NaCl (cubique à faces centrées, coordinence 6)",
-    "arete_maille_pm": 564,
-    "source_arete": "fiche NaCl §4 (à contrôler CRM)",
-    "ions_par_arete": 6,
-    "ion_au_coin": "Cl-",
-    "voisins_attendus": 6
-  },
-  "grain": {
-    "arete_m": 0.0003,
-    "masse_volumique_g_cm3": 2.17,
-    "masse_molaire_g_mol": 58.44
-  },
-  "affichage": {
-    "facteur_reduction": 0.28,
-    "vibration_pm": 10,
-    "vitesse_vibration": 0.45,
-    "fond": "#E2E9F0",
-    "couleur_support": "#CBD6E1",
-    "fond_capture": "#FFFFFF"
-  },
-  "echelle": {
-    "regle_max_m": 0.1,
-    "regle_min_m": 1e-10,
-    "regle_min_ion_m": 1e-15
-  },
-  "temps1": {
-    "etapes": [
-      {
-        "id": "question-1",
-        "type": "question",
-        "texte": "question-1",
-        "largeur_m": 0.0012
-      },
-      {
-        "id": "zoom",
-        "type": "zoom",
-        "titre": "etape-zoom",
-        "depart_m": 0.1,
-        "min_m": 3e-10,
-        "max_m": 0.1,
-        "fin_lecture_m": 2e-09
-      },
-      {
-        "id": "reseau",
-        "type": "exploration",
-        "titre": "etape-reseau",
-        "largeur_m": 2e-09,
-        "min_m": 3e-10,
-        "max_m": 1.5e-08
-      }
-    ],
-    "messages": [
-      {
-        "de_m": 0.1,
-        "a_m": 0.005,
-        "texte": "message-saliere"
-      },
-      {
-        "de_m": 0.005,
-        "a_m": 0.001,
-        "texte": "message-grains"
-      },
-      {
-        "de_m": 0.001,
-        "a_m": 0.0002,
-        "texte": "message-un-grain"
-      },
-      {
-        "de_m": 0.0002,
-        "a_m": 1e-05,
-        "texte": "message-paliers"
-      },
-      {
-        "de_m": 1e-05,
-        "a_m": 1e-07,
-        "texte": "message-marches-fines"
-      },
-      {
-        "de_m": 1e-07,
-        "a_m": 1.2e-08,
-        "texte": "message-une-couche"
-      },
-      {
-        "de_m": 1.2e-08,
-        "a_m": 2.5e-09,
-        "texte": "message-motif"
-      },
-      {
-        "de_m": 2.5e-09,
-        "a_m": 1e-15,
-        "texte": "message-ions"
-      }
-    ],
-    "instruments": [
-      {
-        "de_m": 0.1,
-        "a_m": 0.005,
-        "texte": "instrument-oeil"
-      },
-      {
-        "de_m": 0.005,
-        "a_m": 0.001,
-        "texte": "instrument-loupe"
-      },
-      {
-        "de_m": 0.001,
-        "a_m": 0.0002,
-        "texte": "instrument-microscope-400"
-      },
-      {
-        "de_m": 0.0002,
-        "a_m": 1e-05,
-        "texte": "instrument-microscope-1000"
-      },
-      {
-        "de_m": 1e-05,
-        "a_m": 1e-07,
-        "texte": "instrument-electronique"
-      },
-      {
-        "de_m": 1e-07,
-        "a_m": 1.2e-08,
-        "texte": "instrument-force-atomique"
-      },
-      {
-        "de_m": 1.2e-08,
-        "a_m": 1e-15,
-        "texte": "instrument-modele"
-      }
-    ],
-    "messages_ion": [
-      {
-        "de_m": 3e-10,
-        "a_m": 8e-11,
-        "texte": "message-bohr",
-        "texte_avance": "message-nuage"
-      },
-      {
-        "de_m": 8e-11,
-        "a_m": 1.2e-13,
-        "texte": "message-vide",
-        "texte_avance": "message-vide-avance"
-      },
-      {
-        "de_m": 1.2e-13,
-        "a_m": 1e-16,
-        "texte": "message-noyau",
-        "texte_avance": "message-noyau"
-      }
-    ]
-  },
-  "temps2": {
-    "eau": {
-      "OH_pm": 96,
-      "angle_deg": 104.5,
-      "source_geometrie": "fiche NaCl §4",
-      "rayon_O_pm": 152,
-      "rayon_H_pm": 120,
-      "source_rayons": "rayons de Van der Waals (Bondi), de mémoire, à contrôler CRM",
-      "couleur_O": "#FF0D0D",
-      "couleur_H": "#FFFFFF",
-      "rayon_baton_pm": 40
-    },
-    "cortege": {
-      "Na+": {
-        "atome": "O",
-        "distance_pm": 240
-      },
-      "Cl-": {
-        "atome": "H",
-        "distance_pm": 230
-      },
-      "nombre": 6,
-      "source": "décisions de Roger du 15.11.2026 (fiche §11)"
-    },
-    "chronologie": {
-      "premier_depart": 12,
-      "debut_demontage": 24,
-      "fin_demontage": 54,
-      "duree_trajet": 7,
-      "elan_pm": 900,
-      "ions_precoces": 20,
-      "debut_orientation": 6,
-      "duree_trajet_premier": 10
-    },
-    "solution": {
-      "rayon_min_nm": 2.4,
-      "rayon_max_nm": 6.4,
-      "distance_min_nm": 1.1,
-      "errance_pm": 150
-    },
-    "camera": [
-      [
-        0,
-        4.2e-09,
-        0
-      ],
-      [
-        5,
-        4.2e-09,
-        0
-      ],
-      [
-        8,
-        3e-09,
-        0.75
-      ],
-      [
-        12,
-        3e-09,
-        0.75
-      ],
-      [
-        15,
-        3.8e-09,
-        0.45
-      ],
-      [
-        18,
-        4.4e-09,
-        0.4
-      ],
-      [
-        24,
-        4.6e-09,
-        0
-      ],
-      [
-        40,
-        9e-09,
-        0
-      ],
-      [
-        56,
-        1.7e-08,
-        0
-      ]
-    ],
-    "etapes": [
-      {
-        "id": "question-2",
-        "type": "question",
-        "texte": "question-2",
-        "t": 0
-      },
-      {
-        "id": "eau-arrive",
-        "type": "choregraphie",
-        "titre": "etape-eau-arrive",
-        "debut": 0,
-        "fin": 6,
-        "message": "message-eau-arrive"
-      },
-      {
-        "id": "eau-oriente",
-        "type": "choregraphie",
-        "titre": "etape-eau-oriente",
-        "debut": 6,
-        "fin": 12,
-        "message": "message-eau-oriente",
-        "message_avance": "message-eau-oriente-avance"
-      },
-      {
-        "id": "premier-ion",
-        "type": "choregraphie",
-        "titre": "etape-premier-ion",
-        "debut": 12,
-        "fin": 18,
-        "message": "message-premier-ion",
-        "suivre_premier": true
-      },
-      {
-        "id": "ion-entoure",
-        "type": "choregraphie",
-        "titre": "etape-ion-entoure",
-        "debut": 18,
-        "fin": 24,
-        "message": "message-ion-entoure",
-        "suivre_premier": true
-      },
-      {
-        "id": "demontage",
-        "type": "choregraphie",
-        "titre": "etape-demontage",
-        "debut": 24,
-        "fin": 56,
-        "message": "message-demontage"
-      },
-      {
-        "id": "solution",
-        "type": "choregraphie",
-        "titre": "etape-solution",
-        "debut": 56,
-        "fin": 68,
-        "continu": true,
-        "message": "message-solution",
-        "message_avance": "message-solution-avance"
-      },
-      {
-        "id": "mise-en-commun",
-        "type": "question",
-        "texte": "question-mise-en-commun",
-        "t": 68
-      }
-    ]
+  "Cl-": {
+   "element": "Cl",
+   "charge": -1,
+   "rayon_pm": 181,
+   "source_rayon": "fiche NaCl §4 : rayon ionique, coordinence 6 (à contrôler CRM)",
+   "couleur": "#1E9E1E",
+   "etiquette": "Cl⁻",
+   "couches": [
+    2,
+    8,
+    8
+   ],
+   "noyau": {
+    "isotope": "³⁵Cl",
+    "protons": 17,
+    "neutrons": 18,
+    "rayon_fm": 3.9,
+    "source": "rayon ≈ 1,2 × A^(1/3) fm, A = 35 (ordre de grandeur) ; isotope provisoire"
+   }
   }
+ },
+ "reseau": {
+  "structure": "NaCl (cubique à faces centrées, coordinence 6)",
+  "arete_maille_pm": 564,
+  "source_arete": "fiche NaCl §4 (à contrôler CRM)",
+  "ions_par_arete": 6,
+  "ion_au_coin": "Cl-",
+  "voisins_attendus": 6
+ },
+ "grain": {
+  "arete_m": 0.0003,
+  "masse_volumique_g_cm3": 2.17,
+  "masse_molaire_g_mol": 58.44
+ },
+ "affichage": {
+  "facteur_reduction": 0.28,
+  "vibration_pm": 10,
+  "vitesse_vibration": 0.45,
+  "fond": "#E2E9F0",
+  "couleur_support": "#CBD6E1",
+  "fond_capture": "#FFFFFF"
+ },
+ "echelle": {
+  "regle_max_m": 0.1,
+  "regle_min_m": 1e-10,
+  "regle_min_ion_m": 1e-15
+ },
+ "temps1": {
+  "etapes": [
+   {
+    "id": "question-1",
+    "type": "question",
+    "texte": "question-1",
+    "largeur_m": 0.0012
+   },
+   {
+    "id": "zoom",
+    "type": "zoom",
+    "titre": "etape-zoom",
+    "depart_m": 0.1,
+    "min_m": 3e-10,
+    "max_m": 0.1,
+    "fin_lecture_m": 2e-09
+   },
+   {
+    "id": "reseau",
+    "type": "exploration",
+    "titre": "etape-reseau",
+    "largeur_m": 2e-09,
+    "min_m": 3e-10,
+    "max_m": 1.5e-08
+   }
+  ],
+  "messages": [
+   {
+    "de_m": 0.1,
+    "a_m": 0.005,
+    "texte": "message-saliere"
+   },
+   {
+    "de_m": 0.005,
+    "a_m": 0.001,
+    "texte": "message-grains"
+   },
+   {
+    "de_m": 0.001,
+    "a_m": 0.0002,
+    "texte": "message-un-grain"
+   },
+   {
+    "de_m": 0.0002,
+    "a_m": 1e-05,
+    "texte": "message-paliers"
+   },
+   {
+    "de_m": 1e-05,
+    "a_m": 1e-07,
+    "texte": "message-marches-fines"
+   },
+   {
+    "de_m": 1e-07,
+    "a_m": 1.2e-08,
+    "texte": "message-une-couche"
+   },
+   {
+    "de_m": 1.2e-08,
+    "a_m": 2.5e-09,
+    "texte": "message-motif"
+   },
+   {
+    "de_m": 2.5e-09,
+    "a_m": 1e-15,
+    "texte": "message-ions"
+   }
+  ],
+  "instruments": [
+   {
+    "de_m": 0.1,
+    "a_m": 0.005,
+    "texte": "instrument-oeil"
+   },
+   {
+    "de_m": 0.005,
+    "a_m": 0.001,
+    "texte": "instrument-loupe"
+   },
+   {
+    "de_m": 0.001,
+    "a_m": 0.0002,
+    "texte": "instrument-microscope-400"
+   },
+   {
+    "de_m": 0.0002,
+    "a_m": 1e-05,
+    "texte": "instrument-microscope-1000"
+   },
+   {
+    "de_m": 1e-05,
+    "a_m": 1e-07,
+    "texte": "instrument-electronique"
+   },
+   {
+    "de_m": 1e-07,
+    "a_m": 1.2e-08,
+    "texte": "instrument-force-atomique"
+   },
+   {
+    "de_m": 1.2e-08,
+    "a_m": 1e-15,
+    "texte": "instrument-modele"
+   }
+  ],
+  "messages_ion": [
+   {
+    "de_m": 3e-10,
+    "a_m": 8e-11,
+    "texte": "message-bohr",
+    "texte_avance": "message-nuage"
+   },
+   {
+    "de_m": 8e-11,
+    "a_m": 1.2e-13,
+    "texte": "message-vide",
+    "texte_avance": "message-vide-avance"
+   },
+   {
+    "de_m": 1.2e-13,
+    "a_m": 1e-16,
+    "texte": "message-noyau",
+    "texte_avance": "message-noyau"
+   }
+  ]
+ },
+ "temps2": {
+  "eau": {
+   "OH_pm": 96,
+   "angle_deg": 104.5,
+   "source_geometrie": "fiche NaCl §4",
+   "rayon_O_pm": 152,
+   "rayon_H_pm": 120,
+   "source_rayons": "rayons de Van der Waals (Bondi), de mémoire, à contrôler CRM",
+   "couleur_O": "#FF0D0D",
+   "couleur_H": "#FFFFFF",
+   "rayon_baton_pm": 40
+  },
+  "cortege": {
+   "Na+": {
+    "atome": "O",
+    "distance_pm": 240
+   },
+   "Cl-": {
+    "atome": "H",
+    "distance_pm": 230
+   },
+   "nombre": 6,
+   "source": "décisions de Roger du 15.11.2026 (fiche §11)"
+  },
+  "ions_suivis": {
+   "Na+": [
+    5,
+    0,
+    0
+   ],
+   "Cl-": [
+    5,
+    5,
+    0
+   ],
+   "source": "choix de l'exécutant : deux coins visibles de profil depuis l'angle de vue de départ"
+  },
+  "chronologie": {
+   "orientation_s": [
+    1.5,
+    6.5
+   ],
+   "depart_na": 10,
+   "depart_cl": 24,
+   "completion_s": 2.5,
+   "premier_echange_s": 4,
+   "echange_s": [
+    6,
+    9
+   ],
+   "vitesse_errant_pm_s": 160,
+   "debut_dissolution": 37,
+   "fin_dissolution": 72,
+   "delai_surface_s": 1.5,
+   "effacement_cortege_s": [
+    1.2,
+    1.5
+   ],
+   "fin_simulation": 150,
+   "boucle_s": 50
+  },
+  "diffusion": {
+   "pas_s": 0.25,
+   "ecart_pm": 42,
+   "derive_pm_s": 30,
+   "derive_pres_pm_s": 180,
+   "detachement_pas": 4,
+   "detachement_pm": 620,
+   "detachement_suivi_pas": 12,
+   "detachement_suivi_pm": 900,
+   "distance_ions_pm": 650,
+   "distance_suivi_pm": 900,
+   "distance_cristal_pm": 520,
+   "distance_cristal_suivi_pm": 850,
+   "rayon_max_nm": 4.0,
+   "source": "choix de l'exécutant : marche au hasard tirée une fois pour toutes (graine fixe), sans forces"
+  },
+  "eau_libre": {
+   "maximum": 100,
+   "grille_pm": 300,
+   "couche_pm": [
+    650,
+    950
+   ],
+   "ecart_surface_pm": 560,
+   "ecart_libres_pm": 560,
+   "ecart_eau_surface_pm": 480,
+   "distance_ion_pm": 600,
+   "distance_suivi_pm": 900,
+   "agitation_pm": 60,
+   "source": "décision de Roger du 16.11.2026 : une centaine de molécules au plus autour du grain"
+  },
+  "halo": {
+   "rayon_pm": 340,
+   "couleur": "#3D7CC9",
+   "apparition_s": [
+    0.6,
+    1.8
+   ],
+   "source": "choix de l'exécutant : rayon proche de l'encombrement du cortège dessiné (Na⁺–O 240 pm + molécule d'eau)"
+  },
+  "camera": [
+   [
+    0,
+    5e-09,
+    0,
+    0
+   ],
+   [
+    8,
+    5e-09,
+    0,
+    0
+   ],
+   [
+    11,
+    4.2e-09,
+    0.5,
+    0
+   ],
+   [
+    15,
+    4.4e-09,
+    0.65,
+    0
+   ],
+   [
+    20,
+    4.6e-09,
+    0.65,
+    0
+   ],
+   [
+    22,
+    4.8e-09,
+    0.35,
+    0
+   ],
+   [
+    25,
+    4.4e-09,
+    0,
+    0.5
+   ],
+   [
+    29,
+    4.6e-09,
+    0,
+    0.65
+   ],
+   [
+    34,
+    4.6e-09,
+    0,
+    0.65
+   ],
+   [
+    36,
+    5e-09,
+    0,
+    0.35
+   ],
+   [
+    40,
+    5.5e-09,
+    0,
+    0
+   ],
+   [
+    58,
+    8.5e-09,
+    0,
+    0
+   ],
+   [
+    76,
+    1.1e-08,
+    0,
+    0
+   ]
+  ],
+  "etapes": [
+   {
+    "id": "question-2",
+    "type": "question",
+    "texte": "question-2",
+    "t": 0
+   },
+   {
+    "id": "grain-dans-eau",
+    "type": "choregraphie",
+    "titre": "etape-grain-dans-eau",
+    "debut": 0,
+    "fin": 8,
+    "message": "message-grain-dans-eau",
+    "message_avance": "message-grain-dans-eau-avance"
+   },
+   {
+    "id": "cation-solvate",
+    "type": "choregraphie",
+    "titre": "etape-cation-solvate",
+    "debut": 8,
+    "fin": 22,
+    "message": "message-cation-solvate",
+    "suivre": "Na+"
+   },
+   {
+    "id": "anion-solvate",
+    "type": "choregraphie",
+    "titre": "etape-anion-solvate",
+    "debut": 22,
+    "fin": 36,
+    "message": "message-anion-solvate",
+    "suivre": "Cl-"
+   },
+   {
+    "id": "dissolution-graduelle",
+    "type": "choregraphie",
+    "titre": "etape-dissolution-graduelle",
+    "debut": 36,
+    "fin": 76,
+    "message": "message-dissolution-graduelle"
+   },
+   {
+    "id": "solution",
+    "type": "choregraphie",
+    "titre": "etape-solution",
+    "debut": 76,
+    "fin": 88,
+    "continu": true,
+    "message": "message-solution",
+    "message_avance": "message-solution-avance"
+   },
+   {
+    "id": "mise-en-commun",
+    "type": "question",
+    "texte": "question-mise-en-commun",
+    "t": 88
+   }
+  ]
+ }
 }
