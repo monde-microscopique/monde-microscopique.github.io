@@ -241,6 +241,7 @@ try {
   verifier('solution : 6 molécules d\'eau par ion, eau et ions à leur vraie taille, « tailles réelles » masqué', sol.eau >= 1295 && sol.facteur === 1 && sol.tailles, JSON.stringify(sol));
   // Étiquettes « O » et « H » sur l'eau.
   await page.keyboard.press('e');
+  await page.waitForFunction(() => window.__monde.scene.etiqIons.opacite === 1, null, { timeout: 5000 }).catch(() => {});
   const etiq = await page.evaluate(() => { const s = window.__monde.scene; return [s.etiqNomO.opacite, s.etiqNomH.opacite, s.etiqIons.opacite]; });
   verifier('étiquettes : aussi sur l\'eau (O et H)', etiq.every((x) => x === 1), JSON.stringify(etiq));
   await page.keyboard.press('e');
