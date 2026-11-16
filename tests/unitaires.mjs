@@ -140,6 +140,15 @@ const sommets = [...ma.membres].map((i) => sceneIon.cristal[i]).filter((x) => [x
 verifier('maille : 8 sommets, tous Cl⁻', sommets.length === 8 && sommets.every((x) => x.espece === 'Cl-'));
 verifier('maille : arête de 564 pm', proche(ma.max[0] - ma.min[0], 564, 1e-9) && proche(ma.max[1] - ma.min[1], 564, 1e-9) && proche(ma.max[2] - ma.min[2], 564, 1e-9));
 
+const sceneExp = new SceneNaCl(d, null, null);
+sceneExp.allerEtape(2);
+sceneExp.definirLargeur(1e-7);
+verifier('exploration : on peut dézoomer jusqu\'à 15 nm (pas plus)', sceneExp.etat.largeur === 1.5e-8, String(sceneExp.etat.largeur));
+const fe = sceneExp.fondus(1.5e-8);
+verifier('exploration à 15 nm : cube seul, ions pleinement visibles, ni faces ni reste du grain', fe.ions === 1 && fe.faces === 0 && fe.surface === 1);
+verifier('exploration : vue centrée sur le cube à toute échelle', norme(soustraire(sceneExp.centrePour(1.5e-8), sceneExp.centreCristalPm.map((v) => v * 1e-12))) < 1e-20);
+verifier('exploration : instrument « modèle »', sceneExp.instrument() === 'instrument-modele');
+
 console.log('Textes');
 let refuse = false;
 try { lireTextes('## bon-titre\nTexte\n## titre abîmé\nTexte', 'essai.md'); } catch { refuse = true; }

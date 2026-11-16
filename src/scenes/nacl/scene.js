@@ -135,7 +135,7 @@ export class SceneNaCl {
 
   // Clic ou toucher sur l'écran : sélection de l'ion le plus proche de l'observateur sous le pointeur.
   cliquer(x, y) {
-    if (this.fige || this.camera.largeur > 5e-9) return false;
+    if (this.fige || this.camera.largeur > 1.5e-8) return false;
     const c = this.camera;
     const facteur = this.facteurTaille;
     let meilleur = -1, zMin = Infinity;
@@ -203,7 +203,8 @@ export class SceneNaCl {
       c = melanger([0, 0, 0], grain, W / 1e-3);
     }
     const cristal = this.centreCristalPm.map((v) => v * PM);
-    c = melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
+    // En exploration, la vue reste centrée sur le cube, quelle que soit l'échelle.
+    c = this.etape.type === 'exploration' ? cristal : melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
     // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration.
     const fi = this.etat.fonduIon * lisse(log10(6e-10), log10(2.5e-10), lw);
     if (fi > 0) c = melanger(c, this.centreIonSelectionne(), fi);
@@ -226,10 +227,12 @@ export class SceneNaCl {
   fondus(W) {
     const lw = log10(W);
     const exploration = this.etape.type === 'exploration';
+    // Exploration : le cube de 216 ions seul (modèle), à toutes les échelles permises (jusqu'à 15 nm).
+    if (exploration) return { ions: 1, faces: 0, surface: 1 };
     return {
       ions: lisse(log10(3e-8), log10(8e-9), lw),                       // les ions apparaissent
       faces: 1 - lisse(log10(7e-9), log10(4e-9), lw),                  // les faces du grain s'effacent
-      surface: exploration ? 1 : lisse(log10(5e-9), log10(2.8e-9), lw), // le reste du grain s'efface
+      surface: lisse(log10(5e-9), log10(2.8e-9), lw),                  // le reste du grain s'efface
     };
   }
 
@@ -271,7 +274,7 @@ export class SceneNaCl {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ecran.l, ecran.h);
     if (options.fondCapture) { ctx.fillStyle = options.fondCapture; ctx.fillRect(0, 0, ecran.l, ecran.h); }
-    if (f.faces > 0.001 || c.largeur > 1e-8) dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
+    if (this.etape.type !== 'exploration' && (f.faces > 0.001 || c.largeur > 1e-8)) dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
 
     // Zoom dans l'ion : la boule de l'ion sélectionné s'efface, le schéma (ou le nuage) prend le relais.
     const fa = fondusAtome(c.largeur);
@@ -338,6 +341,7 @@ export class SceneNaCl {
   // Instrument capable de montrer l'image à cette échelle (affiché sous la règle).
   instrument() {
     const W = this.etat.largeur;
+    if (this.etape.type === 'exploration') return 'instrument-modele';
     const m = (this.d.temps1.instruments || []).find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
     return m ? m.texte : null;
   }

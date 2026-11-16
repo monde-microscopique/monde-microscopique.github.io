@@ -94,7 +94,7 @@
         "titre": "etape-reseau",
         "largeur_m": 2e-09,
         "min_m": 3e-10,
-        "max_m": 2.2e-09
+        "max_m": 1.5e-08
       }
     ],
     "messages": [

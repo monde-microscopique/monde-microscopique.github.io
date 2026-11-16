@@ -60,6 +60,7 @@ pm = picomètre (10⁻¹² m) ; fm = femtomètre (10⁻¹⁵ m) ; µm = micromè
 7. **Zoom dans l'ion** : le schéma de Bohr a la taille de la boule dessinée (pas à l'échelle, c'est écrit). Conventions reprises de ton artefact « Lire le tableau périodique » : rayons des couches 62 : 98 : 134, électrons sur 4 positions, célibataires puis paires, couche externe soulignée, noyau compact (protons rouges, neutrons gris) annoté « p⁺ / n⁰ ». Le noyau est dessiné à sa vraie taille, d'où le repère « le noyau est ici » tant qu'il est invisible.
 8. **Nuage électronique (avancé)** : dégradé plus dense au centre, très dilué vers l'extérieur ; il reste visible en zoomant (formulation du « vide » validée le 15.11.2026).
 9. **Maille** : choisie au centre du cube de 216 ions ; volume teinté bleu, sans trait.
+10. **Exploration** : dézoom possible jusqu'à 15 nm (demande de Roger du 16.11.2026) ; le cube de 216 ions reste seul, sans le reste du grain, et l'instrument affiché est « modèle ».
 
 ## Écart par rapport à la fiche
 - Départ du zoom à 10 cm au lieu de 1 cm (validé le 15.11.2026).
