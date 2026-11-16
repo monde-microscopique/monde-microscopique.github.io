@@ -7,6 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { lireTextes, markdownVersHtml } from './markdown.mjs';
+import { estEquation, equationSvg } from './equations.mjs';
 import { CLES_INTERFACE } from '../src/interface/cles.js';
 import { SCENES } from '../src/scenes/registre-cles.js';
 
@@ -28,7 +29,13 @@ function exiger(textes, cles, fichier) {
 
 function lireTextesSurs(chemin) {
   try {
-    return lireTextes(lire(chemin), chemin);
+    const textes = lireTextes(lire(chemin), chemin);
+    // Un texte qui n'est qu'une équation \ce{...} est rendu en image vectorielle (notation mhchem).
+    for (const [nom, t] of Object.entries(textes)) {
+      if (!estEquation(t.source)) continue;
+      try { t.html = equationSvg(t.source); } catch (e) { erreurs.push(`${chemin}, ligne ${t.ligne} : l'équation « ${nom} » est illisible (${e.message}).`); }
+    }
+    return textes;
   } catch (e) {
     if (e.erreursTextes) { erreurs.push(...e.erreursTextes); return {}; }
     throw e;

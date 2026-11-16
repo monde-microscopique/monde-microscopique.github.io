@@ -196,5 +196,160 @@
         "texte_avance": "message-noyau"
       }
     ]
+  },
+  "temps2": {
+    "eau": {
+      "OH_pm": 96,
+      "angle_deg": 104.5,
+      "source_geometrie": "fiche NaCl §4",
+      "rayon_O_pm": 152,
+      "rayon_H_pm": 120,
+      "source_rayons": "rayons de Van der Waals (Bondi), de mémoire, à contrôler CRM",
+      "couleur_O": "#FF0D0D",
+      "couleur_H": "#FFFFFF",
+      "rayon_baton_pm": 40
+    },
+    "cortege": {
+      "Na+": {
+        "atome": "O",
+        "distance_pm": 240
+      },
+      "Cl-": {
+        "atome": "H",
+        "distance_pm": 230
+      },
+      "nombre": 6,
+      "source": "décisions de Roger du 15.11.2026 (fiche §11)"
+    },
+    "chronologie": {
+      "premier_depart": 12,
+      "debut_demontage": 24,
+      "fin_demontage": 54,
+      "duree_trajet": 7,
+      "elan_pm": 900,
+      "ions_precoces": 20,
+      "debut_orientation": 6,
+      "duree_trajet_premier": 10
+    },
+    "solution": {
+      "rayon_min_nm": 2.4,
+      "rayon_max_nm": 6.4,
+      "distance_min_nm": 1.1,
+      "errance_pm": 150
+    },
+    "camera": [
+      [
+        0,
+        4.2e-09,
+        0
+      ],
+      [
+        5,
+        4.2e-09,
+        0
+      ],
+      [
+        8,
+        3e-09,
+        0.75
+      ],
+      [
+        12,
+        3e-09,
+        0.75
+      ],
+      [
+        15,
+        3.8e-09,
+        0.45
+      ],
+      [
+        18,
+        4.4e-09,
+        0.4
+      ],
+      [
+        24,
+        4.6e-09,
+        0
+      ],
+      [
+        40,
+        9e-09,
+        0
+      ],
+      [
+        56,
+        1.7e-08,
+        0
+      ]
+    ],
+    "etapes": [
+      {
+        "id": "question-2",
+        "type": "question",
+        "texte": "question-2",
+        "t": 0
+      },
+      {
+        "id": "eau-arrive",
+        "type": "choregraphie",
+        "titre": "etape-eau-arrive",
+        "debut": 0,
+        "fin": 6,
+        "message": "message-eau-arrive"
+      },
+      {
+        "id": "eau-oriente",
+        "type": "choregraphie",
+        "titre": "etape-eau-oriente",
+        "debut": 6,
+        "fin": 12,
+        "message": "message-eau-oriente",
+        "message_avance": "message-eau-oriente-avance"
+      },
+      {
+        "id": "premier-ion",
+        "type": "choregraphie",
+        "titre": "etape-premier-ion",
+        "debut": 12,
+        "fin": 18,
+        "message": "message-premier-ion",
+        "suivre_premier": true
+      },
+      {
+        "id": "ion-entoure",
+        "type": "choregraphie",
+        "titre": "etape-ion-entoure",
+        "debut": 18,
+        "fin": 24,
+        "message": "message-ion-entoure",
+        "suivre_premier": true
+      },
+      {
+        "id": "demontage",
+        "type": "choregraphie",
+        "titre": "etape-demontage",
+        "debut": 24,
+        "fin": 56,
+        "message": "message-demontage"
+      },
+      {
+        "id": "solution",
+        "type": "choregraphie",
+        "titre": "etape-solution",
+        "debut": 56,
+        "fin": 68,
+        "continu": true,
+        "message": "message-solution",
+        "message_avance": "message-solution-avance"
+      },
+      {
+        "id": "mise-en-commun",
+        "type": "question",
+        "texte": "question-mise-en-commun",
+        "t": 68
+      }
+    ]
   }
 }

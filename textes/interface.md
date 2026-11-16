@@ -75,6 +75,15 @@ Zoom dans l'ion
 ## inter-avance
 Avancé
 
+## inter-equation
+Équation
+
+## inter-delta
+δ+ δ−
+
+## compteur-cristal
+Encore dans le cristal
+
 ## compteur-charge
 Charge totale
 
@@ -82,7 +91,7 @@ Charge totale
 vous êtes ici
 
 ## aide-clavier
-Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles, M maille, I zoom dans l'ion, A avancé.
+Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles, M maille, I zoom dans l'ion, A avancé, Q équation, D charges partielles.
 
 ## webgl-absent
 La 3D est désactivée sur cet appareil : affichage simplifié en 2D.

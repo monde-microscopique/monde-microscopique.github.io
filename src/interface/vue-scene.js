@@ -7,6 +7,7 @@ import { Rendu2D } from '../moteur/rendu2d.js';
 import { Camera } from '../moteur/camera.js';
 import { ecrireLongueur, barreEchelle, graduations } from '../moteur/echelle.js';
 import { dessinerMacro, dessinerRepere } from '../scenes/nacl/macro.js';
+import { dessinerBecher } from '../scenes/nacl/becher.js';
 
 const INTERRUPTEURS = [
   { nom: 'etiquettes', cle: 'inter-etiquettes', touche: 'e' },
@@ -16,6 +17,8 @@ const INTERRUPTEURS = [
   { nom: 'maille', cle: 'inter-maille', touche: 'm' },
   { nom: 'ion', cle: 'inter-ion', touche: 'i' },
   { nom: 'avance', cle: 'inter-avance', touche: 'a' },
+  { nom: 'equation', cle: 'inter-equation', touche: 'q' },
+  { nom: 'delta', cle: 'inter-delta', touche: 'd', avanceSeulement: true },
 ];
 
 export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScene, sousEtape) {
@@ -38,7 +41,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   const regle = el('div', { class: 'regle', role: 'slider', tabindex: '0', 'aria-label': 'Échelle : largeur du champ visible' }, regleRail, regleRepere);
   const barre = el('div', { class: 'barre-echelle' }, el('div', { class: 'barre-trait' }), el('div', { class: 'barre-texte' }));
   const question = el('div', { class: 'question', hidden: true });
-  const vue = el('div', { class: 'vue' }, canvasMacro, canvasGl, canvasAtome, encart, message, compteurs, regle, instrument, barre, question);
+  const equation = el('div', { class: 'equation', hidden: true });
+  const vue = el('div', { class: 'vue' }, canvasMacro, canvasGl, canvasAtome, encart, message, compteurs, regle, instrument, barre, equation, question);
 
   const btnPrec = el('button', { class: 'bouton', type: 'button', 'aria-label': textes.brut('bouton-precedent') }, '◀', el('span', { class: 'mot' }, ' ' + textes.brut('bouton-precedent')));
   const btnSuiv = el('button', { class: 'bouton', type: 'button', 'aria-label': textes.brut('bouton-suivant') }, el('span', { class: 'mot' }, textes.brut('bouton-suivant') + ' '), '▶');
@@ -46,11 +50,12 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   const btnCapture = el('button', { class: 'bouton', type: 'button', title: 'Image PNG sur fond blanc' }, textes.brut('bouton-capture'));
   const titreEtape = el('div', { class: 'titre-etape' });
   const pastilles = el('div', { class: 'pastilles' });
+  const numeroEtape = el('span', { class: 'numero-etape', 'aria-hidden': 'true' });
 
   const barreHaut = el('header', { class: 'barre-haut' },
     el('a', { class: 'lien-accueil', href: brouillon ? '?brouillon#' : '#' }, '⌂ ', textes.brut('retour-accueil')),
     el('div', { class: 'titre-scene-barre' }, T('titre', {}, 'strong'), titreEtape),
-    el('div', { class: 'commandes' }, btnPrec, pastilles, btnSuiv, btnLecture, btnCapture),
+    el('div', { class: 'commandes' }, btnPrec, pastilles, numeroEtape, btnSuiv, btnLecture, btnCapture),
   );
 
   const boutonsInter = {};
@@ -120,6 +125,7 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
 
   // Pastilles d'étapes
   scene.etapes.forEach((e, i) => {
+    if (i > 0 && e.temps !== scene.etapes[i - 1].temps) pastilles.append(el('span', { class: 'separateur-temps', 'aria-hidden': 'true' }));
     pastilles.append(el('button', { class: 'pastille', type: 'button', 'aria-label': `Étape ${i + 1}`, onclick: () => { scene.allerEtape(i); majEtape(); } }, String(i + 1)));
   });
 
@@ -145,17 +151,20 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const i = scene.etat.etape;
     titreEtape.innerHTML = '';
     if (e.titre) titreEtape.append(T(e.titre));
-    else if (e.type === 'question') titreEtape.append(`Prédiction`);
-    [...pastilles.children].forEach((p, k) => p.setAttribute('aria-current', k === i ? 'step' : 'false'));
+    else if (e.type === 'question') titreEtape.append(e.id === 'mise-en-commun' ? 'Mise en commun' : 'Prédiction');
+    [...pastilles.querySelectorAll('.pastille')].forEach((p, k) => p.setAttribute('aria-current', k === i ? 'step' : 'false'));
+    numeroEtape.textContent = `${i + 1} / ${scene.etapes.length}`;
     btnPrec.disabled = i === 0;
     btnSuiv.disabled = i === scene.etapes.length - 1;
-    btnLecture.hidden = e.type !== 'zoom';
+    btnLecture.hidden = e.type !== 'zoom' && e.type !== 'choregraphie';
     if (e.type === 'question') {
       question.innerHTML = '';
       question.append(
         T(e.texte, { class: 'question-texte' }, 'p'),
         textes.bloc('p', 'image-arretee', null, { class: 'question-note' }),
-        el('button', { class: 'bouton bouton-principal', type: 'button', onclick: () => { scene.allerEtape(i + 1); majEtape(); } }, textes.brut('bouton-observer')),
+        i < scene.etapes.length - 1
+          ? el('button', { class: 'bouton bouton-principal', type: 'button', onclick: () => { scene.allerEtape(i + 1); majEtape(); } }, textes.brut('bouton-observer'))
+          : null,
       );
       question.hidden = false;
     } else {
@@ -169,15 +178,30 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
 
   function majInterrupteurs() {
     for (const [nom, b] of Object.entries(boutonsInter)) b.setAttribute('aria-pressed', String(scene.etat.inter[nom]));
-    compteurs.hidden = !scene.etat.inter.compteurs;
-    if (!compteurs.hidden) {
-      compteurs.innerHTML = '';
-      const b = scene.bilan;
-      for (const [esp, n] of Object.entries(b.compte)) {
-        compteurs.append(el('div', {}, el('span', { class: 'puce', style: `background:${infos.donnees.especes[esp].couleur}` }), `${infos.donnees.especes[esp].etiquette} : `, el('strong', {}, String(n))));
-      }
-      compteurs.append(el('div', {}, `${textes.brut('compteur-charge')} : `, el('strong', {}, String(b.charge))));
+    // δ+ δ− : seulement au niveau avancé (fiche NaCl §6).
+    for (const i of INTERRUPTEURS) if (i.avanceSeulement) boutonsInter[i.nom].hidden = !scene.etat.inter.avance;
+    equation.hidden = !scene.etat.inter.equation;
+    if (!equation.hidden && !equation.dataset.rempli) {
+      equation.append(T('equation-dissolution', { class: 'equation-formule' }, 'div'));
+      equation.dataset.rempli = '1';
     }
+    compteurs.hidden = !scene.etat.inter.compteurs;
+    majCompteurs();
+  }
+
+  let cleCompteurs = '';
+  function majCompteurs() {
+    if (compteurs.hidden) return;
+    const b = scene.compteurs();
+    const cle = `${b.dansCristal}|${scene.temps2}`;
+    if (cle === cleCompteurs && compteurs.childElementCount) return;
+    cleCompteurs = cle;
+    compteurs.innerHTML = '';
+    for (const [esp, n] of Object.entries(b.compte)) {
+      compteurs.append(el('div', {}, el('span', { class: 'puce', style: `background:${infos.donnees.especes[esp].couleur}` }), `${infos.donnees.especes[esp].etiquette} : `, el('strong', {}, String(n))));
+    }
+    compteurs.append(el('div', {}, `${textes.brut('compteur-charge')} : `, el('strong', {}, String(b.charge))));
+    if (scene.temps2) compteurs.append(el('div', { class: 'compteur-detail' }, `${textes.brut('compteur-cristal')} : `, el('strong', {}, String(b.dansCristal)), ` / ${b.total}`));
   }
 
   for (const i of INTERRUPTEURS) {
@@ -316,12 +340,18 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       message.classList.toggle('vide', !cle);
     }
     btnLecture.textContent = scene.etat.lecture ? '❚❚ ' + textes.brut('bouton-pause') : '▶ ' + textes.brut('bouton-lecture');
+    majCompteurs();
     // Encart macro
     const ctx = encartCanvas.getContext('2d');
     const dpr = ecran.dpr;
     const ew = encartCanvas.width / dpr, eh = encartCanvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ew, eh);
+    if (scene.temps2) {
+      dessinerBecher(ctx, ew, eh, scene.fractionCristal, scene.etat.tc, infos.donnees.affichage.fond);
+      encartLegende.textContent = 'bécher';
+      return;
+    }
     camEncart.base = scene.baseDepart;
     camEncart.ecran = { l: ew, h: eh };
     const grand = W > 4e-3;

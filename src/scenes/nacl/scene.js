@@ -1,4 +1,5 @@
-// Scène NaCl, temps 1 : question, zoom continu de la salière aux ions, exploration du réseau.
+// Scène NaCl : temps 1 (question, zoom continu de la salière aux ions, exploration du réseau)
+// et temps 2 (question, dissolution chorégraphiée en 6 étapes, mise en commun).
 // Ce module ne crée pas d'interface : il calcule l'état et dessine. L'interface (src/interface) le pilote.
 
 import { Camera } from '../../moteur/camera.js';
@@ -6,6 +7,7 @@ import { baseDepuisVisee, interpolerBase, tourner, melanger, lisse, borner, coul
 import { genererCristal, genererSurface, voisins, bilan, aleatoire } from './reseau.js';
 import { creerDecor, dessinerMacro } from './macro.js';
 import { dessinerAtome, fondusAtome } from './atome.js';
+import { planDissolution, etatDissolution, positionIon } from './dissolution.js';
 
 const PM = 1e-12;
 const log10 = Math.log10;
@@ -33,41 +35,66 @@ export class SceneNaCl {
     this.surface = genererSurface(40, n, r.arete_maille_pm, r.ion_au_coin);
     this.bilan = bilan(this.cristal, this.d.especes);
     const alea = aleatoire(2026);
+    const phase = () => [alea() * 6.283, alea() * 6.283, alea() * 6.283];
     const sphere = (ion) => {
       const e = this.d.especes[ion.espece];
-      return {
-        pos: ion.pos, rayon: e.rayon_pm, couleur: couleurRvb(e.couleur),
-        phase: [alea() * 6.283, alea() * 6.283, alea() * 6.283],
-      };
+      return { pos: ion.pos, rayon: e.rayon_pm, couleur: couleurRvb(e.couleur), phase: phase() };
     };
     this.spheresCristal = this.cristal.map(sphere);
     this.spheresSurface = this.surface.map(sphere);
+
+    // Temps 2 : plan de la dissolution et molécules d'eau (corps rigides : même phase de vibration pour O et H).
+    this.plan = planDissolution(this.d, this.cristal, this.voisins);
+    const eau = this.d.temps2.eau;
+    const phasesEau = this.plan.eaux.map(() => phase());
+    this.spheresO = this.plan.eaux.map((_, k) => ({ pos: [0, 0, 0], rayon: eau.rayon_O_pm, couleur: couleurRvb(eau.couleur_O), phase: phasesEau[k] }));
+    this.spheresH = this.plan.eaux.flatMap((_, k) => [0, 1].map(() => ({ pos: [0, 0, 0], rayon: eau.rayon_H_pm, couleur: couleurRvb(eau.couleur_H), phase: phasesEau[k] })));
+    this.etat2 = etatDissolution(this.plan, 0);
+    this.extremites = new Float32Array(this.plan.eaux.length * 12);
+
     if (rendu) {
       this.lotSurface = rendu.creerLot(this.spheresSurface);
-      this.lotCristal = rendu.creerLot(this.spheresCristal);
-      rendu.creerAtlas(Object.values(this.d.especes).map((e) => e.etiquette));
-      rendu.creerEtiquettes(this.cristal.map((ion, i) => ({ sphere: this.spheresCristal[i], texte: this.d.especes[ion.espece].etiquette })));
+      this.lotCristal = rendu.creerLot(this.spheresCristal, { dynamique: true });
+      this.lotO = rendu.creerLot(this.spheresO, { dynamique: true });
+      this.lotH = rendu.creerLot(this.spheresH, { dynamique: true });
+      const cO = couleurRvb(eau.couleur_O), cH = couleurRvb(eau.couleur_H);
+      this.batons = rendu.creerBatons(this.plan.eaux.flatMap((_, k) => [0, 1].map(() => ({
+        a: [0, 0, 0], b: [0, 0, 0], rayon: eau.rayon_baton_pm, couleurA: cO, couleurB: cH, phase: phasesEau[k],
+      }))), { dynamique: true });
+      rendu.creerAtlas([...Object.values(this.d.especes).map((e) => e.etiquette), 'δ+', 'δ−']);
+      this.etiqIons = rendu.creerEtiquettes(this.lotCristal, this.cristal.map((ion, i) => ({ index: i, texte: this.d.especes[ion.espece].etiquette })));
+      this.etiqO = rendu.creerEtiquettes(this.lotO, this.plan.eaux.map((_, k) => ({ index: k, texte: 'δ−' })));
+      this.etiqH = rendu.creerEtiquettes(this.lotH, this.spheresH.map((_, k) => ({ index: k, texte: 'δ+' })));
+      this.etiqO.seuil = this.etiqH.seuil = 7;
     }
 
-    this.etapes = this.d.temps1.etapes;
+    this.etapes = [
+      ...this.d.temps1.etapes.map((e) => ({ ...e, temps: 1 })),
+      ...this.d.temps2.etapes.map((e) => ({ ...e, temps: 2 })),
+    ];
     this.etat = {
       etape: 0,
       largeur: this.etapes[0].largeur_m,
-      temps: 0,
+      temps: 0,       // horloge de la vibration thermique
+      tc: 0,          // temps de la chorégraphie (temps 2), en secondes
       lecture: false,
-      inter: { etiquettes: false, voisins: false, compteurs: false, tailles: false, maille: false, ion: false, avance: false },
+      zoomManuel: false,
+      inter: { etiquettes: false, voisins: false, compteurs: false, tailles: false, maille: false, ion: false, avance: false, equation: false, delta: false },
       fonduIon: 0,
       selection: this.cristal.findIndex((ion) => ion.i === 2 && ion.j === 2 && ion.k === 2),
+      suivi: false,
       retourBase: null,
     };
     // Maille : cube de 564 pm (3 ions par arête), ion Cl⁻ aux sommets (fiche v0.3).
     this.maille = this.calculerMaille();
     this.fonduSurface = -1;
+    this.appliquerTemps();
     this.majEtatsCristal();
   }
 
   get etape() { return this.etapes[this.etat.etape]; }
   get fige() { return this.etape.type === 'question'; }
+  get temps2() { return this.etape.temps === 2; }
 
   // ---------------------------------------------------------------- navigation
   allerEtape(i) {
@@ -76,50 +103,126 @@ export class SceneNaCl {
     const precedent = this.etape;
     this.etat.etape = i;
     this.etat.lecture = false;
+    this.etat.zoomManuel = false;
     this.etat.retourBase = null; // un retour d'orientation en cours ne doit pas survivre au changement d'étape
-    if (e.type === 'question') {
+    if (e.temps === 2) {
+      this.etat.tc = e.type === 'question' ? e.t : e.debut;
+      if (e.type === 'question') this.camera.base = this.baseDepart;
+      if (e.type === 'choregraphie') this.etat.lecture = true;
+      // Étapes 3 et 4 : le premier ion qui part est marqué et suivi.
+      if (e.suivre_premier) { this.etat.selection = this.plan.ordre[0]; this.etat.suivi = true; }
+      this.etat.largeur = this.largeurAuto(this.etat.tc);
+    } else if (e.type === 'question') {
       this.etat.largeur = e.largeur_m;
       this.camera.base = this.baseDepart;
     } else if (e.type === 'zoom') {
       if (precedent.type === 'question') this.etat.largeur = e.depart_m;
       this.etat.largeur = borner(this.etat.largeur, this.minimum, e.max_m);
-      if (precedent.type === 'exploration') this.etat.retourBase = { de: this.camera.base, t: 0 };
+      if (precedent.type === 'exploration' || precedent.temps === 2) this.etat.retourBase = { de: this.camera.base, t: 0 };
     } else if (e.type === 'exploration') {
       if (this.etat.largeur > e.max_m || (this.etat.largeur < 1e-9 && !this.etat.inter.ion)) this.etat.largeur = e.largeur_m;
     }
+    this.appliquerTemps();
+    this.majEtatsCristal();
   }
+
+  // Positions des particules selon le temps : réseau au temps 1, chorégraphie au temps 2.
+  appliquerTemps() {
+    const t2 = this.temps2;
+    this.etat2 = etatDissolution(this.plan, t2 ? this.etat.tc : 0, this.etat2);
+    if (!this.lotCristal) return;
+    if (t2) this.lotCristal.majPositions(this.etat2.ions);
+    else if (this.dernierTemps2 !== false) this.lotCristal.majPositions(Float32Array.from(this.spheresCristal.flatMap((s) => s.pos)));
+    this.dernierTemps2 = t2;
+    this.lotO.visible = this.lotH.visible = this.batons.visible = t2;
+    if (!t2) return;
+    const e = this.etat2;
+    this.lotO.majPositions(e.O);
+    this.lotH.majPositions(e.H);
+    const x = this.extremites;
+    for (let k = 0; k < this.plan.eaux.length; k++) {
+      for (let h = 0; h < 2; h++) {
+        x.set(e.O.subarray(k * 3, k * 3 + 3), (k * 2 + h) * 6);
+        x.set(e.H.subarray(k * 6 + h * 3, k * 6 + h * 3 + 3), (k * 2 + h) * 6 + 3);
+      }
+    }
+    this.batons.majPositions(x);
+    // Visibilité des molécules d'eau (l'eau n'est dessinée qu'autour des espèces d'intérêt).
+    const f = e.fonduEau;
+    const cle = f.reduce((s, v, k) => s + v * (k + 1), 0);
+    if (cle !== this.cleFondus) {
+      this.cleFondus = cle;
+      this.lotO.definirEtats(Array.from(f, (v) => [v, 0, 0]));
+      this.lotH.definirEtats(Array.from(f).flatMap((v) => [[v, 0, 0], [v, 0, 0]]));
+      this.batons.definirFondus(Array.from(f).flatMap((v) => [v, v]));
+      const fe = Array.from(f);
+      this.etiqO.fondre(fe);
+      this.etiqH.fondre(fe.flatMap((v) => [v, v]));
+    }
+  }
+
+  // Caméra de la chorégraphie : largeur du champ et rapprochement vers le premier ion qui part.
+  // (L'utilisateur peut zoomer : la largeur choisie par lui est alors gardée jusqu'à l'étape suivante.)
+  cameraAuto(tc) {
+    const pts = this.d.temps2.camera;
+    if (tc <= pts[0][0]) return { W: pts[0][1], poids: pts[0][2] ?? 0 };
+    for (let k = 1; k < pts.length; k++) {
+      if (tc <= pts[k][0]) {
+        const u = lisse(pts[k - 1][0], pts[k][0], tc);
+        return {
+          W: 10 ** (log10(pts[k - 1][1]) + (log10(pts[k][1]) - log10(pts[k - 1][1])) * u),
+          poids: (pts[k - 1][2] ?? 0) + ((pts[k][2] ?? 0) - (pts[k - 1][2] ?? 0)) * u,
+        };
+      }
+    }
+    const fin = pts[pts.length - 1];
+    return { W: fin[1], poids: fin[2] ?? 0 };
+  }
+
+  largeurAuto(tc) { return this.cameraAuto(tc).W; }
 
   // Facteur > 1 : on s'éloigne ; < 1 : on s'approche.
   // Limite basse du zoom : 300 pm, ou 1 fm quand l'interrupteur « zoom dans l'ion » est activé.
   get minimum() {
-    return this.etat.inter.ion ? this.d.echelle.regle_min_ion_m : this.etape.min_m;
+    return this.etat.inter.ion ? this.d.echelle.regle_min_ion_m : (this.etape.min_m ?? 3e-10);
+  }
+
+  get maximum() {
+    return this.etape.max_m ?? 2e-8;
   }
 
   zoomer(facteur) {
     if (this.fige) return;
-    this.etat.largeur = borner(this.etat.largeur * facteur, this.minimum, this.etape.max_m);
+    this.etat.largeur = borner(this.etat.largeur * facteur, this.minimum, this.maximum);
+    this.etat.zoomManuel = true;
   }
 
   definirLargeur(m) {
     if (this.fige) return;
-    this.etat.largeur = borner(m, this.minimum, this.etape.max_m);
+    this.etat.largeur = borner(m, this.minimum, this.maximum);
+    this.etat.zoomManuel = true;
   }
 
   basculerLecture() {
-    if (this.fige || this.etape.type !== 'zoom') { this.etat.lecture = false; return; }
-    if (!this.etat.lecture && this.etat.largeur <= this.etape.fin_lecture_m * 1.01) this.etat.largeur = this.etape.depart_m;
+    const e = this.etape;
+    if (this.fige || (e.type !== 'zoom' && e.type !== 'choregraphie')) { this.etat.lecture = false; return; }
+    if (e.type === 'zoom' && !this.etat.lecture && this.etat.largeur <= e.fin_lecture_m * 1.01) this.etat.largeur = e.depart_m;
+    if (e.type === 'choregraphie' && !this.etat.lecture && !e.continu && this.etat.tc >= e.fin - 1e-6) {
+      this.etat.tc = e.debut;
+      this.etat.zoomManuel = false;
+    }
     this.etat.lecture = !this.etat.lecture;
   }
 
   basculer(nom) {
     this.etat.inter[nom] = !this.etat.inter[nom];
     // Sans le zoom dans l'ion, on remonte à la limite habituelle (300 pm).
-    if (nom === 'ion' && !this.etat.inter.ion && !this.fige) this.etat.largeur = Math.max(this.etat.largeur, this.etape.min_m);
+    if (nom === 'ion' && !this.etat.inter.ion && !this.fige) this.etat.largeur = Math.max(this.etat.largeur, this.etape.min_m ?? 3e-10);
     this.majEtatsCristal();
   }
 
   get rotationPermise() {
-    return this.etape.type === 'exploration';
+    return this.etape.type === 'exploration' || this.etape.type === 'choregraphie';
   }
 
   tourner(dxPx, dyPx) {
@@ -133,20 +236,27 @@ export class SceneNaCl {
     this.camera.base = interpolerBase({ droite, haut, avant }, { droite, haut, avant }, 0);
   }
 
+  // Position actuelle d'un ion (pm), sans la vibration.
+  positionActuelle(i) {
+    return this.temps2 ? positionIon(this.plan, i, this.etat.tc) : this.cristal[i].pos;
+  }
+
   // Clic ou toucher sur l'écran : sélection de l'ion le plus proche de l'observateur sous le pointeur.
+  // Au temps 2, l'ion sélectionné est suivi : son trajet est tracé.
   cliquer(x, y) {
-    if (this.fige || this.camera.largeur > 1.5e-8) return false;
+    if (this.fige || this.camera.largeur > 2e-8) return false;
     const c = this.camera;
     const facteur = this.facteurTaille;
     let meilleur = -1, zMin = Infinity;
     this.cristal.forEach((ion, i) => {
-      const p = c.projeter(ion.pos.map((v) => v * PM));
+      const p = c.projeter(this.positionActuelle(i).map((v) => v * PM));
       const r = this.d.especes[ion.espece].rayon_pm * PM * facteur * c.pxParMetre;
       if ((p.x - x) ** 2 + (p.y - y) ** 2 <= Math.max(r, 8) ** 2 && p.z < zMin) { zMin = p.z; meilleur = i; }
     });
     if (meilleur < 0) return false;
     this.etat.selection = meilleur;
-    if (!this.etat.inter.voisins) this.etat.inter.voisins = true;
+    if (this.temps2) this.etat.suivi = true;
+    else if (!this.etat.inter.voisins) this.etat.inter.voisins = true;
     this.majEtatsCristal();
     return true;
   }
@@ -176,14 +286,17 @@ export class SceneNaCl {
   majEtatsCristal() {
     if (!this.lotCristal) return;
     const sel = this.etat.selection;
-    const proches = new Set([sel, ...this.voisins[sel]]);
-    const v = this.etat.inter.voisins;
-    const m = this.etat.inter.maille;
+    const dans = (i) => !this.temps2 || this.etat2.dansCristal[i] === 1;
+    const proches = new Set([sel, ...this.voisins[sel].filter(dans)]);
+    const v = this.etat.inter.voisins && dans(sel);
+    // Au temps 2, la maille n'a de sens que tant que ses 27 ions sont encore dans le cristal.
+    const m = this.etat.inter.maille && [...this.maille.membres].every(dans);
     const attenuation = (i) => (m && !this.maille.membres.has(i) ? 0.88 : v && !proches.has(i) ? 0.78 : 0);
-    const ion = this.etat.inter.ion;
+    const marque = this.etat.inter.voisins || this.etat.inter.ion || (this.temps2 && this.etat.suivi);
     const fb = this.fonduBoule || 0;
-    this.lotCristal.definirEtats(this.cristal.map((_, i) => [i === sel ? fb : 0, attenuation(i), (v || ion) && i === sel && fb < 0.5 ? 1 : 0]));
-    this.rendu.fondreEtiquettes(this.cristal.map((_, i) => Math.max(attenuation(i) ? 0.85 : 0, i === sel ? fb : 0)));
+    this.lotCristal.definirEtats(this.cristal.map((_, i) => [i === sel ? fb : 0, attenuation(i), marque && i === sel && fb < 0.5 ? 1 : 0]));
+    this.etiqIons.fondre(this.cristal.map((_, i) => Math.max(attenuation(i) ? 0.85 : 0, i === sel ? fb : 0)));
+    this.cleEtats = `${m}|${v}|${this.temps2 ? this.etat2.dansCristal.reduce((s, x) => s + x, 0) : 216}`;
     if (m) this.rendu.definirBoite(this.maille.min, this.maille.max);
     else this.rendu.definirBoite(null);
   }
@@ -203,9 +316,15 @@ export class SceneNaCl {
       c = melanger([0, 0, 0], grain, W / 1e-3);
     }
     const cristal = this.centreCristalPm.map((v) => v * PM);
-    // En exploration, la vue reste centrée sur le cube, quelle que soit l'échelle.
-    c = this.etape.type === 'exploration' ? cristal : melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
-    // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration.
+    // En exploration et au temps 2, la vue reste centrée sur le cube, quelle que soit l'échelle.
+    const centre = this.etape.type === 'exploration' || this.temps2;
+    c = centre ? cristal : melanger(c, cristal, lisse(log10(2e-8), log10(3e-9), lw));
+    // Temps 2 : la caméra se rapproche du coin d'où part le premier ion, puis le suit un moment.
+    if (this.temps2) {
+      const poids = this.cameraAuto(this.etat.tc).poids;
+      if (poids > 0) c = melanger(c, positionIon(this.plan, this.plan.ordre[0], this.etat.tc).map((v) => v * PM), poids);
+    }
+    // Zoom dans l'ion : on se rapproche de l'ion sélectionné, en suivant sa vibration (et son trajet).
     const fi = this.etat.fonduIon * lisse(log10(6e-10), log10(2.5e-10), lw);
     if (fi > 0) c = melanger(c, this.centreIonSelectionne(), fi);
     return c;
@@ -214,21 +333,21 @@ export class SceneNaCl {
   // Position (m) de l'ion sélectionné, vibration comprise (même formule que le rendu).
   centreIonSelectionne() {
     const s = this.spheresCristal[this.etat.selection];
+    const p = this.positionActuelle(this.etat.selection);
     const t = this.etat.temps * (this.d.affichage.vitesse_vibration ?? 1);
     const A = this.d.affichage.vibration_pm;
     return [
-      (s.pos[0] + A * Math.sin(t * 5.1 + s.phase[0])) * PM,
-      (s.pos[1] + A * Math.sin(t * 4.3 + s.phase[1])) * PM,
-      (s.pos[2] + A * Math.sin(t * 5.9 + s.phase[2])) * PM,
+      (p[0] + A * Math.sin(t * 5.1 + s.phase[0])) * PM,
+      (p[1] + A * Math.sin(t * 4.3 + s.phase[1])) * PM,
+      (p[2] + A * Math.sin(t * 5.9 + s.phase[2])) * PM,
     ];
   }
 
   // Grandeurs de fondu entre représentations, selon la largeur du champ.
   fondus(W) {
     const lw = log10(W);
-    const exploration = this.etape.type === 'exploration';
-    // Exploration : le cube de 216 ions seul (modèle), à toutes les échelles permises (jusqu'à 15 nm).
-    if (exploration) return { ions: 1, faces: 0, surface: 1 };
+    // Exploration et temps 2 : les ions seuls (modèle), à toutes les échelles permises.
+    if (this.etape.type === 'exploration' || this.temps2) return { ions: 1, faces: 0, surface: 1 };
     return {
       ions: lisse(log10(3e-8), log10(8e-9), lw),                       // les ions apparaissent
       faces: 1 - lisse(log10(7e-9), log10(4e-9), lw),                  // les faces du grain s'effacent
@@ -251,6 +370,18 @@ export class SceneNaCl {
       this.etat.largeur *= 10 ** (-dt * decades / 40);
       if (this.etat.largeur <= e.fin_lecture_m) { this.etat.largeur = e.fin_lecture_m; this.etat.lecture = false; }
     }
+    if (e.type === 'choregraphie') {
+      if (this.etat.lecture) {
+        this.etat.tc += dt;
+        if (!e.continu && this.etat.tc >= e.fin) { this.etat.tc = e.fin; this.etat.lecture = false; }
+      }
+      if (!this.etat.zoomManuel && !this.etat.inter.ion) this.etat.largeur = this.largeurAuto(this.etat.tc);
+    }
+    if (this.temps2) {
+      this.appliquerTemps();
+      const cle = `${this.etat.inter.maille && [...this.maille.membres].every((i) => this.etat2.dansCristal[i] === 1)}|${this.etat.inter.voisins && this.etat2.dansCristal[this.etat.selection] === 1}|${this.etat2.dansCristal.reduce((s, x) => s + x, 0)}`;
+      if (cle !== this.cleEtats && (this.etat.inter.maille || this.etat.inter.voisins)) this.majEtatsCristal();
+    }
     if (this.etat.retourBase) {
       const rb = this.etat.retourBase;
       rb.t = Math.min(1, rb.t + dt / 0.6);
@@ -259,7 +390,7 @@ export class SceneNaCl {
     }
   }
 
-  // Dessine les deux couches (2D et WebGL). fond : couleur de fond (capture : blanc).
+  // Dessine les couches (2D, WebGL, atome). fondCapture : fond blanc pour la capture.
   dessiner(ecran, options = {}) {
     const c = this.camera;
     c.ecran = { l: ecran.l, h: ecran.h };
@@ -268,13 +399,16 @@ export class SceneNaCl {
     const f = this.fondus(c.largeur);
     this.derniersFondus = f;
 
-    // Couche 2D
+    // Couche 2D (sous les ions) : décor au temps 1, trajet de l'ion suivi au temps 2.
     const ctx = this.ctxMacro;
     const dpr = ecran.dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ecran.l, ecran.h);
     if (options.fondCapture) { ctx.fillStyle = options.fondCapture; ctx.fillRect(0, 0, ecran.l, ecran.h); }
-    if (this.etape.type !== 'exploration' && (f.faces > 0.001 || c.largeur > 1e-8)) dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
+    if (!this.temps2 && this.etape.type !== 'exploration' && (f.faces > 0.001 || c.largeur > 1e-8)) {
+      dessinerMacro(ctx, c, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: f.faces, repereCible: this.etape.type === 'zoom' && !options.fondCapture });
+    }
+    if (this.temps2 && this.etat.suivi) this.dessinerTrajet(ctx);
 
     // Zoom dans l'ion : la boule de l'ion sélectionné s'efface, le schéma (ou le nuage) prend le relais.
     const fa = fondusAtome(c.largeur);
@@ -302,6 +436,9 @@ export class SceneNaCl {
     if (visibleGl < 0.002) return;
     this.majFonduSurface(f.surface);
     const fond = couleurRvb(options.fondCapture || this.d.affichage.fond);
+    const delta = this.temps2 && this.etat.inter.avance && this.etat.inter.delta;
+    this.etiqIons.opacite = this.etat.inter.etiquettes ? 1 : 0;
+    this.etiqO.opacite = this.etiqH.opacite = delta ? 1 : 0;
     r.dessiner({
       base: c.base,
       centrePm: c.centre.map((v) => v / PM),
@@ -309,11 +446,30 @@ export class SceneNaCl {
       temps: this.etat.temps * (this.d.affichage.vitesse_vibration ?? 1),
       amp: this.d.affichage.vibration_pm,
       facteur: this.facteurTaille,
+      facteurBaton: this.facteurTaille,
       fond,
-      opaciteEtiquettes: this.etat.inter.etiquettes ? 1 : 0,
       profondeurPm: 4e4,
       brume: [-0.3 * c.largeur / PM, 0.5 * c.largeur / PM, 0.55],
     });
+  }
+
+  // Trajet de l'ion suivi, depuis son départ du cristal (temps 2).
+  dessinerTrajet(ctx) {
+    const i = this.etat.selection;
+    const t0 = this.plan.ions[i].tDepart, t1 = this.etat.tc;
+    if (t1 <= t0) return;
+    const c = this.camera;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(192,57,43,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    for (let t = t0, k = 0; t <= t1 + 1e-9; t += Math.max(0.05, (t1 - t0) / 200), k++) {
+      const p = c.projeter(positionIon(this.plan, i, Math.min(t, t1)).map((v) => v * PM));
+      if (k) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   majFonduSurface(v) {
@@ -325,7 +481,7 @@ export class SceneNaCl {
     this.lotSurface.definirEtats(this.surface.map((ion) => [Math.max(v, lisse(0.8, 1, ion.bord)), 0, 0]));
   }
 
-  // Message à afficher selon la largeur du champ (étape de zoom seulement).
+  // Message à afficher : selon l'échelle (zoom), l'étape (temps 2) ou le zoom dans l'ion.
   message() {
     const e = this.etape;
     const W = this.etat.largeur;
@@ -333,6 +489,7 @@ export class SceneNaCl {
       const m = this.d.temps1.messages_ion.find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
       if (m) return this.etat.inter.avance ? m.texte_avance : m.texte;
     }
+    if (e.type === 'choregraphie') return (this.etat.inter.avance && e.message_avance) || e.message;
     if (e.type !== 'zoom') return null;
     const m = this.d.temps1.messages.find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
     return m ? m.texte : null;
@@ -341,9 +498,20 @@ export class SceneNaCl {
   // Instrument capable de montrer l'image à cette échelle (affiché sous la règle).
   instrument() {
     const W = this.etat.largeur;
-    if (this.etape.type === 'exploration') return 'instrument-modele';
+    if (this.etape.type === 'exploration' || this.temps2) return 'instrument-modele';
     const m = (this.d.temps1.instruments || []).find((x) => W <= x.de_m * 1.0001 && W > x.a_m);
     return m ? m.texte : null;
+  }
+
+  // Compteurs : nombres d'ions (toujours 108 et 108) et, au temps 2, combien sont encore dans le cristal.
+  compteurs() {
+    const dansCristal = this.temps2 ? this.etat2.dansCristal.reduce((s, x) => s + x, 0) : this.cristal.length;
+    return { ...this.bilan, dansCristal, total: this.cristal.length };
+  }
+
+  // Fraction des ions encore dans le cristal (taille du grain dans le bécher).
+  get fractionCristal() {
+    return this.compteurs().dansCristal / this.cristal.length;
   }
 
   // Contrôles (utilisés par les tests automatiques et la console) : écart entre deux ions voisins à l'écran.
@@ -353,7 +521,6 @@ export class SceneNaCl {
     const pb = this.camera.projeter(b.pos.map((v) => v * PM));
     const ecart = soustraire([pa.x, pa.y, 0], [pb.x, pb.y, 0]);
     const vrai = soustraire(b.pos, a.pos).map((v) => v * PM);
-    // Longueur projetée attendue du vecteur entre voisins.
     const attendu = Math.hypot(scalaire(vrai, this.camera.base.droite), scalaire(vrai, this.camera.base.haut)) * this.camera.pxParMetre;
     return { mesure: Math.hypot(ecart[0], ecart[1]), attendu };
   }

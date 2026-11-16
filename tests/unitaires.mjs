@@ -10,6 +10,7 @@ import { ecrireLongueur, barreEchelle } from '../src/moteur/echelle.js';
 import { lireTextes } from '../outils/markdown.mjs';
 import { norme, soustraire } from '../src/moteur/vec.js';
 import { positionsElectrons } from '../src/scenes/nacl/atome.js';
+import { planDissolution, etatDissolution, controler, positionIon } from '../src/scenes/nacl/dissolution.js';
 
 let echecs = 0, total = 0;
 function verifier(nom, condition, detail = '') {
@@ -148,6 +149,61 @@ const fe = sceneExp.fondus(1.5e-8);
 verifier('exploration à 15 nm : cube seul, ions pleinement visibles, ni faces ni reste du grain', fe.ions === 1 && fe.faces === 0 && fe.surface === 1);
 verifier('exploration : vue centrée sur le cube à toute échelle', norme(soustraire(sceneExp.centrePour(1.5e-8), sceneExp.centreCristalPm.map((v) => v * 1e-12))) < 1e-20);
 verifier('exploration : instrument « modèle »', sceneExp.instrument() === 'instrument-modele');
+
+console.log('Dissolution (temps 2)');
+const plan = planDissolution(d, cristal, v);
+verifier('1296 molécules d\'eau : 6 par ion', plan.eaux.length === 216 * 6 && cristal.every((_, i) => plan.eaux.filter((w) => w.ion === i).length === 6));
+const premier = plan.ordre[0];
+verifier('le premier ion qui part est un coin (3 voisins)', v[premier].length === 3, String(v[premier].length));
+let ecartNaCl = 0; const partis = { 'Na+': 0, 'Cl-': 0 };
+plan.ordre.forEach((i) => { partis[cristal[i].espece]++; ecartNaCl = Math.max(ecartNaCl, Math.abs(partis['Na+'] - partis['Cl-'])); });
+verifier('Na⁺ et Cl⁻ partent en nombres égaux (écart ≤ 1 à tout moment)', ecartNaCl <= 1, String(ecartNaCl));
+const etapes2 = d.temps2.etapes.filter((e) => e.type === 'choregraphie');
+const instants = [...new Set([0, ...etapes2.flatMap((e) => [e.debut, (e.debut + e.fin) / 2, e.fin]), 90])];
+let conserve = true, rigide = true, pireOH = 0, pireAngle = 0;
+for (const t of instants) {
+  const e = etatDissolution(plan, t);
+  const k = controler(plan, e, d.especes);
+  if (k.compte['Na+'] !== 108 || k.compte['Cl-'] !== 108 || k.charge !== 0 || e.ions.some((x) => !Number.isFinite(x))) conserve = false;
+  pireOH = Math.max(pireOH, k.pireOH); pireAngle = Math.max(pireAngle, k.pireAngleDeg);
+  if (k.pireOH > 0.01 || k.pireAngleDeg > 0.01) rigide = false;
+}
+verifier(`conservation à chaque étape (${instants.length} instants) : 108 Na⁺, 108 Cl⁻, charge 0`, conserve);
+verifier('aucune molécule d\'eau modifiée : O–H = 96 pm et H–O–H = 104,5° à 0,01 près', rigide, `écarts : ${pireOH.toExponential(1)} pm, ${pireAngle.toExponential(1)}°`);
+const fin = etatDissolution(plan, 68);
+verifier('à la fin, plus aucun ion dans le cristal', fin.dansCristal.every((x) => x === 0));
+verifier('à la fin, toutes les molécules d\'eau du cortège sont visibles', fin.fonduEau.every((x) => x === 0));
+// Géométrie du cortège, une fois l'ion installé dans la solution.
+let geoNa = true, geoCl = true;
+const ecartTol = 0.5;
+plan.eaux.forEach((w, q) => {
+  const ion = [fin.ions[w.ion * 3], fin.ions[w.ion * 3 + 1], fin.ions[w.ion * 3 + 2]];
+  const o = [fin.O[q * 3], fin.O[q * 3 + 1], fin.O[q * 3 + 2]];
+  const h1 = [fin.H[q * 6], fin.H[q * 6 + 1], fin.H[q * 6 + 2]], h2 = [fin.H[q * 6 + 3], fin.H[q * 6 + 4], fin.H[q * 6 + 5]];
+  if (plan.ions[w.ion].espece === 'Na+') {
+    const dNaO = norme(soustraire(o, ion));
+    if (Math.abs(dNaO - 240) > ecartTol || norme(soustraire(h1, ion)) <= dNaO || norme(soustraire(h2, ion)) <= dNaO) geoNa = false;
+  } else {
+    const dH = Math.min(norme(soustraire(h1, ion)), norme(soustraire(h2, ion)));
+    const dO = norme(soustraire(o, ion));
+    if (Math.abs(dH - 230) > ecartTol || Math.abs(dO - (230 + 96)) > ecartTol) geoCl = false; // Cl⁻···H–O aligné : dO = dH + O–H
+  }
+});
+verifier('cortège de Na⁺ : O à 240 pm, hydrogènes tournés vers l\'extérieur', geoNa);
+verifier('cortège de Cl⁻ : H à 230 pm, Cl⁻···H–O aligné (O à 326 pm)', geoCl);
+let dIon = Infinity, dEau = Infinity;
+for (let t = 0; t <= 68; t += 0.5) {
+  const e = etatDissolution(plan, t);
+  for (let i = 0; i < 216; i++) for (let j = i + 1; j < 216; j++) dIon = Math.min(dIon, Math.hypot(e.ions[i * 3] - e.ions[j * 3], e.ions[i * 3 + 1] - e.ions[j * 3 + 1], e.ions[i * 3 + 2] - e.ions[j * 3 + 2]));
+  plan.eaux.forEach((w, q) => {
+    if (e.fonduEau[q] > 0.5) return;
+    for (let i = 0; i < 216; i++) if (i !== w.ion) dEau = Math.min(dEau, Math.hypot(e.O[q * 3] - e.ions[i * 3], e.O[q * 3 + 1] - e.ions[i * 3 + 1], e.O[q * 3 + 2] - e.ions[i * 3 + 2]));
+  });
+}
+const fr = d.affichage.facteur_reduction;
+verifier('aucun chevauchement d\'ions à l\'écran (boules réduites)', dIon > (181 + 181) * fr, `distance minimale ${dIon.toFixed(0)} pm`);
+verifier('aucune molécule d\'eau dans un autre ion à l\'écran (boules réduites)', dEau > (181 + 152) * fr, `distance minimale ${dEau.toFixed(0)} pm`);
+verifier('un ion ne s\'arrête jamais dans la solution (errance)', norme(soustraire(positionIon(plan, 0, 80), positionIon(plan, 0, 85))) > 1);
 
 console.log('Textes');
 let refuse = false;

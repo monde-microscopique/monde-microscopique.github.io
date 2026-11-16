@@ -115,26 +115,30 @@ try {
   verifier('molette : on s\'éloigne', (await etat()).largeur > 1e-6);
 
   // Critère 4 : tous les interrupteurs à toutes les étapes, retour en arrière.
-  let interOk = true;
-  for (const i of [0, 1, 2]) {
-    await page.evaluate((i) => { window.__monde.scene.allerEtape(i); }, i);
+  let interOk = true, detailInter = '';
+  const nbEtapes = await page.evaluate(() => window.__monde.scene.etapes.length);
+  const NOMS = ['etiquettes', 'voisins', 'compteurs', 'tailles', 'maille', 'ion', 'avance', 'equation', 'delta'];
+  const TOUCHES = ['e', 'v', 'c', 't', 'm', 'i', 'a', 'q', 'd'];
+  for (let i = 0; i < nbEtapes; i++) {
     await page.locator('.pastille').nth(i).click();
-    for (const [touche, nom] of [['e', 'etiquettes'], ['v', 'voisins'], ['c', 'compteurs'], ['t', 'tailles'], ['m', 'maille'], ['i', 'ion'], ['a', 'avance']]) {
+    for (let n = 0; n < NOMS.length; n++) {
+      const nom = NOMS[n];
       const avant = (await etat()).inter[nom];
-      await page.keyboard.press(touche);
-      await page.waitForTimeout(40);
+      await page.keyboard.press(TOUCHES[n]);
+      await page.waitForTimeout(30);
       const apres = (await etat()).inter[nom];
-      const bouton = await page.locator('.inter').nth(['etiquettes', 'voisins', 'compteurs', 'tailles', 'maille', 'ion', 'avance'].indexOf(nom)).getAttribute('aria-pressed');
-      if (apres === avant || bouton !== String(apres)) interOk = false;
-      await page.keyboard.press(touche);
+      const bouton = await page.locator('.inter').nth(n).getAttribute('aria-pressed');
+      if (apres === avant || bouton !== String(apres)) { interOk = false; detailInter = `étape ${i + 1}, ${nom}`; }
+      await page.keyboard.press(TOUCHES[n]);
     }
   }
-  verifier('les 7 interrupteurs fonctionnent aux 3 étapes (clavier et état des boutons)', interOk);
+  verifier(`les 9 interrupteurs fonctionnent aux ${nbEtapes} étapes (clavier et état des boutons)`, interOk, detailInter);
   await page.locator('.pastille').nth(2).click();
   await page.keyboard.press('c');
   const compteurs = await page.locator('.compteurs').innerText();
   verifier('compteurs : 108 Na⁺, 108 Cl⁻, charge totale 0', /Na⁺ : 108/.test(compteurs) && /Cl⁻ : 108/.test(compteurs) && /Charge totale : 0/.test(compteurs), compteurs);
   await page.keyboard.press('c');
+  await page.locator('.pastille').nth(2).click();
   await page.keyboard.press('ArrowLeft');
   verifier('retour en arrière : exploration → zoom', (await etat()).etape === 'zoom');
   await page.keyboard.press('ArrowLeft');
@@ -174,6 +178,74 @@ try {
   verifier('interrupteur coupé : retour à 300 pm', (await etat()).largeur === 3e-10);
   await page.evaluate(() => window.__monde.scene.definirLargeur(2e-9));
 
+  // ---------------------------------------------------------------- temps 2
+  console.log('Scène NaCl, temps 2 (dissolution)');
+  await page.locator('.pastille').nth(3).click();
+  verifier('question 2 affichée (cristal entouré d\'eau)', (await etat()).etape === 'question-2' && await page.locator('.question').isVisible());
+  await page.waitForTimeout(600);
+  const q2a = await page.locator('.vue').screenshot();
+  await page.waitForTimeout(600);
+  const q2b = await page.locator('.vue').screenshot();
+  verifier('question 2 : rien ne bouge', q2a.equals(q2b));
+  verifier('question 2 : de l\'eau est déjà dessinée autour du cristal', await page.evaluate(() => Array.from(window.__monde.scene.etat2.fonduEau).filter((f) => f < 0.5).length > 10));
+  await page.keyboard.press('ArrowRight');
+  const t0 = (await etat()).tc;
+  await page.waitForTimeout(1200);
+  const e1 = await etat();
+  verifier('étape 1 : la chorégraphie se joue toute seule', e1.etape === 'eau-arrive' && e1.tc > t0 + 0.5, JSON.stringify({ t0, tc: e1.tc }));
+  await page.keyboard.press(' ');
+  const tPause = (await etat()).tc;
+  await page.waitForTimeout(500);
+  verifier('pause : la chorégraphie s\'arrête', Math.abs((await etat()).tc - tPause) < 1e-9);
+  // Conservation à chaque étape, lue dans la page (compteurs et contrôle de l'eau).
+  let conservation = true, detailCons = '';
+  for (let i = 4; i < nbEtapes; i++) {
+    await page.locator('.pastille').nth(i).click();
+    const r = await page.evaluate(() => {
+      const s = window.__monde.scene;
+      const e = s.etape;
+      if (e.type === 'choregraphie') { s.etat.tc = (e.debut + e.fin) / 2; s.appliquerTemps(); }
+      const c = s.compteurs();
+      let pire = 0;
+      const E = s.etat2;
+      for (let k = 0; k < s.plan.eaux.length; k++) {
+        const o = [E.O[k * 3], E.O[k * 3 + 1], E.O[k * 3 + 2]];
+        for (let h = 0; h < 2; h++) pire = Math.max(pire, Math.abs(Math.hypot(E.H[k * 6 + h * 3] - o[0], E.H[k * 6 + h * 3 + 1] - o[1], E.H[k * 6 + h * 3 + 2] - o[2]) - 96));
+      }
+      return { id: e.id, na: c.compte['Na+'], cl: c.compte['Cl-'], q: c.charge, pire };
+    });
+    if (r.na !== 108 || r.cl !== 108 || r.q !== 0 || r.pire > 0.01) { conservation = false; detailCons = JSON.stringify(r); }
+  }
+  verifier('conservation à chaque étape du temps 2 (108 Na⁺, 108 Cl⁻, charge 0, eau intacte)', conservation, detailCons);
+  // Solution : compteurs et équation.
+  const iSol = await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'solution'));
+  await page.locator('.pastille').nth(iSol).click();
+  await page.evaluate(() => { const s = window.__monde.scene; s.etat.tc = 66; s.appliquerTemps(); });
+  await page.keyboard.press('c');
+  await page.keyboard.press('q');
+  await page.waitForTimeout(150);
+  const compteSol = await page.locator('.compteurs').innerText();
+  verifier('solution : toujours 108 Na⁺ et 108 Cl⁻, plus aucun ion dans le cristal', /Na⁺ : 108/.test(compteSol) && /Cl⁻ : 108/.test(compteSol) && /cristal : 0/.test(compteSol), compteSol);
+  verifier('équation affichée (notation du polycopié, image vectorielle)', await page.locator('.equation svg').count() === 1);
+  const becher = await page.locator('.encart-legende').innerText();
+  verifier('écran macro : le bécher', becher === 'bécher', becher);
+  await page.keyboard.press('c');
+  await page.keyboard.press('q');
+  // δ+ δ− seulement en avancé
+  verifier('δ+ δ− caché au niveau standard', await page.locator('.inter').nth(8).isHidden());
+  await page.keyboard.press('a');
+  verifier('δ+ δ− visible au niveau avancé', await page.locator('.inter').nth(8).isVisible());
+  await page.keyboard.press('a');
+  // Suivre une particule (étape 4)
+  const iEnt = await page.evaluate(() => window.__monde.scene.etapes.findIndex((e) => e.id === 'ion-entoure'));
+  await page.locator('.pastille').nth(iEnt).click();
+  const suivi = await page.evaluate(() => { const s = window.__monde.scene; return { suivi: s.etat.suivi, sel: s.etat.selection, premier: s.plan.ordre[0] }; });
+  verifier('étape 4 : le premier ion parti est suivi (trajet tracé)', suivi.suivi && suivi.sel === suivi.premier);
+  // Mise en commun : figée
+  await page.locator('.pastille').nth(nbEtapes - 1).click();
+  verifier('mise en commun : question affichée, scène figée', (await etat()).etape === 'mise-en-commun' && await page.locator('.question').isVisible());
+  await page.locator('.pastille').nth(2).click();
+
   // Critère 8 : capture sur fond blanc.
   const [telechargement] = await Promise.all([page.waitForEvent('download'), page.locator('button', { hasText: 'Capture' }).click()]);
   verifier('capture : un fichier PNG est produit', /\.png$/.test(telechargement.suggestedFilename()), telechargement.suggestedFilename());
@@ -197,7 +269,19 @@ try {
 
   console.log('Affichage 2D de secours');
   page = await nouvellePage();
+  await page.goto(url + '?brouillon&2d#nacl/demontage');
+  await attendre(page);
+  await page.waitForTimeout(400);
+  const pixels2 = await page.evaluate(() => {
+    const c = document.querySelector('.couche-gl');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 0) n++;
+    return n;
+  });
+  verifier('mode 2D : la dissolution est dessinée (ions, eau, bâtons)', pixels2 > 100, String(pixels2));
   await page.goto(url + '?brouillon&2d#nacl/reseau');
+  await page.reload();
   await attendre(page);
   verifier('mode 2D actif', await page.evaluate(() => window.__monde.rendu.mode2d === true));
   await page.waitForTimeout(300);

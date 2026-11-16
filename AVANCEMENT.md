@@ -6,17 +6,17 @@ Mis à jour le 15 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 | Scène | Statut | Fait | Reste |
 |---|---|---|---|
-| NaCl — du grain de sel aux ions | brouillon | Temps 1 : question 1, zoom texturé de 10 cm à 300 pm avec instruments, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles, maille), zoom dans l'ion jusqu'au noyau (Bohr / nuage), capture sur fond blanc | Temps 2 (dissolution), équation, niveau avancé, suivre une particule, fichier HTML unique |
+| NaCl — du grain de sel aux ions | brouillon | Temps 2 : question 2, dissolution chorégraphiée en 6 étapes, mise en commun, bécher, équation, δ+ δ− (avancé), suivre un ion. Temps 1 : question 1, zoom texturé de 10 cm à 300 pm avec instruments, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles, maille), zoom dans l'ion jusqu'au noyau (Bohr / nuage), capture sur fond blanc | Fichier HTML unique de repli ; relecture de Roger |
 
 ## Livraisons
 
 1. **J1a — le zoom, seul (en relecture).** C'est le point le plus risqué du projet : il est livré en premier. À relire : https://monde-microscopique.github.io/?brouillon#nacl
-2. J1b — la dissolution (temps 2).
+2. J1b — la dissolution (temps 2) : livrée le 16.11.2026, en relecture.
 3. J1c — finitions : niveau avancé, suivre une particule, fichier HTML unique de repli, réglages de fluidité sur téléphone réel.
 
 ## Contrôles automatiques
 
-À chaque envoi : 33 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, textes) et 31 contrôles dans Chrome (critères d'acceptation 1 à 8 de la fiche, accueil, mode brouillon, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+À chaque envoi : 68 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation à chaque étape, eau intacte, géométrie des cortèges, aucun chevauchement) et 49 contrôles dans Chrome (critères d'acceptation 1 à 8 sur les 11 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
 
 Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
 

@@ -95,9 +95,66 @@ Le noyau : des protons et des neutrons, serrés dans une boule de quelques femto
 ## repere-noyau
 le noyau est ici, encore trop petit pour être vu
 
+## question-2
+Le grain est remplacé par un cristal minuscule, entouré d'eau. Prédis, sur papier :
+- Comment une molécule d'eau se place-t-elle près d'un Na⁺ ? Près d'un Cl⁻ ?
+- Dessine ce qu'il y a dans l'eau une fois le sel dissous.
+
+## etape-eau-arrive
+L'eau arrive
+
+## etape-eau-oriente
+L'eau s'oriente
+
+## etape-premier-ion
+Premier ion arraché
+
+## etape-ion-entoure
+Ion entouré
+
+## etape-demontage
+Le cristal se démonte
+
+## etape-solution
+La solution
+
+## message-eau-arrive
+Le cristal minuscule remplace le grain. Les molécules d'eau bougent sans cesse et heurtent le cristal.
+
+## message-eau-oriente
+Près d'un ion Na⁺, l'oxygène de l'eau se tourne vers l'ion ; près d'un ion Cl⁻, c'est un hydrogène.
+
+## message-eau-oriente-avance
+L'oxygène (δ−) est attiré par Na⁺, un hydrogène (δ+) par Cl⁻ : les charges opposées s'attirent. Active « δ+ δ− » pour les voir.
+
+## message-premier-ion
+Un ion d'un coin, qui n'a que 3 voisins, quitte le cristal, entouré de molécules d'eau.
+
+## message-ion-entoure
+L'ion s'éloigne avec son cortège de 6 molécules d'eau. Clique un ion pour suivre son trajet.
+
+## message-demontage
+Coins, arêtes, puis couche après couche : les ions Na⁺ et Cl⁻ partent en nombres égaux.
+
+## message-solution
+Il n'y a plus de cristal : chaque ion, entouré d'eau, se déplace dans la solution. Les compteurs n'ont pas changé.
+
+## message-solution-avance
+Pour séparer les ions, il faut vaincre leur attraction ; l'eau la compense en entourant chaque ion. Les compteurs n'ont pas changé.
+
+## question-mise-en-commun
+Où est passé le sel ?
+
+## equation-dissolution
+\ce{NaCl(s) -> Na+(aq) + Cl-(aq)}
+
 ## simplifications
 - Les ions ne sont pas des billes dures et n'ont pas de couleur : les couleurs sont conventionnelles.
 - Les boules sont dessinées plus petites que les ions réels, toutes dans la même proportion : les tailles relatives restent justes. L'interrupteur « tailles réelles » montre que les ions se touchent.
 - Le film est très ralenti.
 - On ne montre qu'un coin minuscule du grain.
 - Le coin montré à l'échelle des ions est parfait ; un vrai cristal a des défauts (marches, trous, bulles).
+- Dissolution : on ne dessine qu'une petite partie de l'eau, et le cristal minuscule remplace le grain entier.
+- Le film est très ralenti et l'ordre de départ des ions est mis en scène.
+- Le nombre de molécules d'eau autour de chaque ion varie en réalité (ici, toujours 6).
+- Les liaisons entre molécules d'eau ne sont pas montrées.

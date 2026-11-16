@@ -18,7 +18,9 @@ Durée : 15 à 20 minutes par livraison. Le but n'est pas de chercher des bugs i
 | Lecture automatique du zoom | barre d'espace ou bouton Lecture | bouton Lecture |
 | Tourner le cristal (étape 3) | cliquer-glisser | glisser un doigt |
 | Voir les voisins d'un ion | cliquer sur l'ion | toucher l'ion |
-| Interrupteurs | touches E, V, C, T, M (maille), I (zoom dans l'ion), A (avancé) ou boutons du bas | boutons du bas (faire défiler la rangée) |
+| Interrupteurs | touches E, V, C, T, M (maille), I (zoom dans l'ion), A (avancé), Q (équation), D (δ+ δ−, en avancé) ou boutons du bas | boutons du bas (faire défiler la rangée) |
+| Lecture / pause d'une étape | barre d'espace ou bouton Lecture | bouton Lecture |
+| Suivre un ion (dissolution) | cliquer sur l'ion | toucher l'ion |
 | Image pour le polycopié | bouton Capture (PNG sur fond blanc) | — |
 
 ## 3. Le parcours

@@ -5,7 +5,7 @@ function clesReferencees(donnees) {
     if (Array.isArray(o)) o.forEach(parcourir);
     else if (o && typeof o === 'object') {
       for (const [k, v] of Object.entries(o)) {
-        if ((k === 'texte' || k === 'titre' || k === 'texte_avance') && typeof v === 'string') cles.add(v);
+        if (['texte', 'titre', 'texte_avance', 'message', 'message_avance'].includes(k) && typeof v === 'string') cles.add(v);
         else parcourir(v);
       }
     }
@@ -19,6 +19,8 @@ export const SCENES = {
     cles: (d) => [...new Set([
       'titre', 'sous-titre', 'coin-du-grain', 'aide-reseau', 'aide-maille', 'repere-noyau', 'simplifications',
       ...clesReferencees(d.temps1 || {}),
+      ...clesReferencees(d.temps2 || {}),
+      'equation-dissolution',
     ])],
   },
 };
