@@ -23,4 +23,13 @@ export const SCENES = {
       'equation-dissolution',
     ])],
   },
+  hydrate: {
+    cles: (d) => [...new Set([
+      'titre', 'sous-titre', 'simplifications', 'instrument-modele', 'formule-hydrate', 'equation-hydrate',
+      'compteur-eau-solide', 'compteur-eau-dehors', 'compteur-par-unite',
+      ...clesReferencees(d.etapes || []),
+      ...clesReferencees(d.zoom || {}),
+      ...(d.etapes || []).filter((e) => e.equation).map((e) => e.equation),
+    ])],
+  },
 };

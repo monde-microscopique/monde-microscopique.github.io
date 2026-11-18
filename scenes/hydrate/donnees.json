@@ -1,0 +1,280 @@
+{
+ "id": "hydrate",
+ "mode": "structure",
+ "interrupteurs": [
+  "etiquettes",
+  "compteurs",
+  "tailles",
+  "avance",
+  "equation"
+ ],
+ "affichage": {
+  "facteur_reduction": 0.28,
+  "vibration_pm": 10,
+  "vitesse_vibration": 0.45,
+  "fond": "#E2E9F0",
+  "couleur_support": "#CBD6E1",
+  "fond_capture": "#FFFFFF"
+ },
+ "echelle": {
+  "regle_max_m": 0.1,
+  "regle_min_m": 1e-10
+ },
+ "especes": {
+  "Cu2+": {
+   "etiquette": "Cu²⁺",
+   "rayon_pm": 73,
+   "couleur": "#B8692E",
+   "charge": 2,
+   "source_rayon": "rayon ionique de Cu²⁺ (coordinence 6), de mémoire, à contrôler (tables CRM)"
+  },
+  "S": {
+   "etiquette": "S",
+   "rayon_pm": 180,
+   "couleur": "#D9A900",
+   "charge": 0,
+   "source_rayon": "rayon de Van der Waals du soufre, de mémoire, à contrôler"
+  },
+  "O": {
+   "etiquette": "O",
+   "rayon_pm": 152,
+   "couleur": "#D9261C",
+   "charge": 0,
+   "source_rayon": "rayon de Van der Waals de l'oxygène, de mémoire, à contrôler (même valeur que l'eau de la scène NaCl)"
+  },
+  "H": {
+   "etiquette": "H",
+   "rayon_pm": 120,
+   "couleur": "#F4F4F4",
+   "charge": 0,
+   "source_rayon": "rayon de Van der Waals de l'hydrogène, de mémoire, à contrôler"
+  }
+ },
+ "motif": {
+  "unites_par_chaine": 3,
+  "chaines": 2,
+  "ecart_chaines_pm": 760,
+  "Cu_O_eau_pm": 196,
+  "Cu_O_sulfate_pm": 240,
+  "S_O_pm": 148,
+  "O_H_pm": 96,
+  "angle_HOH_deg": 104.5,
+  "O5_au_dessus_de_S_pm": 340,
+  "rayon_baton_pm": 40,
+  "source": "Cu–O(eau) 194 à 198 pm, Cu–O(sulfate) 236 à 241 pm, S–O 148 à 149 pm : structure de CuSO₄·5H₂O, Ibrahim et Boeré, New J. Chem. 2022 (DOI 10.1039/D2NJ00169A). O–H et angle de l'eau : comme dans la scène NaCl. Disposition du motif : schématique (choix de l'exécutant)."
+ },
+ "chauffage": {
+  "paliers": [
+   {
+    "id": "palier-1",
+    "eau_restante": 3,
+    "temperature_c": 80,
+    "debut": 0,
+    "montee": 5,
+    "departs": [
+     5,
+     12
+    ],
+    "fin": 14,
+    "quitte": [
+     "libre",
+     "z+"
+    ]
+   },
+   {
+    "id": "palier-2",
+    "eau_restante": 1,
+    "temperature_c": 120,
+    "debut": 14,
+    "montee": 4,
+    "departs": [
+     18,
+     25
+    ],
+    "fin": 28,
+    "quitte": [
+     "y+",
+     "z-"
+    ]
+   },
+   {
+    "id": "palier-3",
+    "eau_restante": 0,
+    "temperature_c": 250,
+    "debut": 28,
+    "montee": 5,
+    "departs": [
+     33,
+     39
+    ],
+    "fin": 42,
+    "quitte": [
+     "y-"
+    ]
+   }
+  ],
+  "temperature_depart_c": 20,
+  "rehydratation": {
+   "debut": 42,
+   "refroidi": 45,
+   "arrivees": [
+    46,
+    56
+   ],
+   "fin": 60
+  },
+  "trajet_vapeur_pm": 2600,
+  "duree_trajet_s": 3.2,
+  "source_temperatures": "CuSO₄·5H₂O → trihydrate vers 80 °C, → monohydrate vers 120 °C, → anhydre au-delà de 240 °C (Ibrahim et Boeré, New J. Chem. 2022). D'autres sources donnent 63 °C, 109 °C et 200 °C : les températures dépendent de la vitesse de chauffage.",
+  "couleurs_solide": {
+   "5": "#2F7FE0",
+   "3": "#7DB6EE",
+   "1": "#C4DDF3",
+   "0": "#F2F2EE"
+  },
+  "source_couleurs": "pentahydrate bleu vif, trihydrate bleu ciel, monohydrate bleu pâle, anhydre incolore (blanc en poudre) : Ibrahim et Boeré 2022"
+ },
+ "zoom": {
+  "instruments": [
+   {
+    "de_m": 0.1,
+    "a_m": 0.005,
+    "texte": "instrument-oeil"
+   },
+   {
+    "de_m": 0.005,
+    "a_m": 0.0002,
+    "texte": "instrument-loupe"
+   },
+   {
+    "de_m": 0.0002,
+    "a_m": 1e-05,
+    "texte": "instrument-microscope"
+   },
+   {
+    "de_m": 1e-05,
+    "a_m": 1e-07,
+    "texte": "instrument-electronique"
+   },
+   {
+    "de_m": 1e-07,
+    "a_m": 1.2e-08,
+    "texte": "instrument-force-atomique"
+   },
+   {
+    "de_m": 1.2e-08,
+    "a_m": 1e-15,
+    "texte": "instrument-modele"
+   }
+  ],
+  "messages": [
+   {
+    "de_m": 0.1,
+    "a_m": 0.002,
+    "texte": "message-cristaux"
+   },
+   {
+    "de_m": 0.002,
+    "a_m": 1e-07,
+    "texte": "message-face"
+   },
+   {
+    "de_m": 1e-07,
+    "a_m": 1.2e-08,
+    "texte": "message-approche"
+   },
+   {
+    "de_m": 1.2e-08,
+    "a_m": 1e-15,
+    "texte": "message-motif"
+   }
+  ]
+ },
+ "etapes": [
+  {
+   "id": "question-1",
+   "type": "question",
+   "texte": "question-1",
+   "largeur_m": 0.02,
+   "temps": 1
+  },
+  {
+   "id": "zoom",
+   "type": "zoom",
+   "titre": "etape-zoom",
+   "depart_m": 0.02,
+   "min_m": 1e-09,
+   "max_m": 0.05,
+   "fin_lecture_m": 4e-09,
+   "temps": 1
+  },
+  {
+   "id": "motif",
+   "type": "exploration",
+   "titre": "etape-motif",
+   "largeur_m": 4e-09,
+   "min_m": 1e-09,
+   "max_m": 1.2e-08,
+   "message": "message-exploration",
+   "message_avance": "message-exploration-avance",
+   "temps": 1
+  },
+  {
+   "id": "question-2",
+   "type": "question",
+   "texte": "question-2",
+   "t": 0,
+   "temps": 2
+  },
+  {
+   "id": "palier-1",
+   "type": "choregraphie",
+   "titre": "etape-palier-1",
+   "debut": 0,
+   "fin": 14,
+   "message": "message-palier-1",
+   "message_avance": "message-palier-1-avance",
+   "equation": "equation-palier-1",
+   "temps": 2
+  },
+  {
+   "id": "palier-2",
+   "type": "choregraphie",
+   "titre": "etape-palier-2",
+   "debut": 14,
+   "fin": 28,
+   "message": "message-palier-2",
+   "message_avance": "message-palier-2-avance",
+   "equation": "equation-palier-2",
+   "temps": 2
+  },
+  {
+   "id": "palier-3",
+   "type": "choregraphie",
+   "titre": "etape-palier-3",
+   "debut": 28,
+   "fin": 42,
+   "message": "message-palier-3",
+   "equation": "equation-palier-3",
+   "temps": 2
+  },
+  {
+   "id": "ajout-eau",
+   "type": "choregraphie",
+   "titre": "etape-ajout-eau",
+   "debut": 42,
+   "fin": 60,
+   "message": "message-ajout-eau",
+   "equation": "equation-rehydratation",
+   "temps": 2
+  },
+  {
+   "id": "mise-en-commun",
+   "type": "question",
+   "texte": "question-mise-en-commun",
+   "t": 60,
+   "temps": 2
+  }
+ ],
+ "largeur_temps2_m": 4.6e-09
+}

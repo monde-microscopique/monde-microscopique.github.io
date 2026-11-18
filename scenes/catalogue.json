@@ -1,5 +1,14 @@
 {
   "scenes": [
-    { "id": "nacl", "chapitre": 8, "statut": "brouillon" }
+    {
+      "id": "hydrate",
+      "chapitre": 4,
+      "statut": "brouillon"
+    },
+    {
+      "id": "nacl",
+      "chapitre": 8,
+      "statut": "brouillon"
+    }
   ]
 }

@@ -11,6 +11,8 @@ import { lireTextes } from '../outils/markdown.mjs';
 import { norme, soustraire } from '../src/moteur/vec.js';
 import { positionsElectrons } from '../src/scenes/nacl/atome.js';
 import { planDissolution, etatDissolution, controler, positionIon, roleMolecule } from '../src/scenes/nacl/dissolution.js';
+import { genererMotif, bilanMotif } from '../src/scenes/hydrate/motif.js';
+import { planChauffage, etatChauffage, controler as controlerChauffage, temperature } from '../src/scenes/hydrate/deshydratation.js';
 
 let echecs = 0, total = 0;
 function verifier(nom, condition, detail = '') {
@@ -273,6 +275,81 @@ verifier('solution : les ions remplissent une boule, pas une coquille', dedans >
 const F = d.temps2.chronologie.fin_simulation;
 const loinA = etatDissolution(plan, F - 0.1), loinB = etatDissolution(plan, F + 0.1), loinC = etatDissolution(plan, 450);
 verifier('au-delà de la fin du calcul, le film continue sans saut (aller-retour)', loinA.ions.every((x, k) => Math.abs(x - loinB.ions[k]) < 5) && loinC.ions.every(Number.isFinite));
+
+console.log('Hydrate (fiche F-E)');
+{
+  const dh = JSON.parse(readFileSync(join(RACINE, 'scenes/hydrate/donnees.json'), 'utf8'));
+  const m = genererMotif(dh.motif);
+  const b = bilanMotif(m, dh.especes);
+  verifier('motif : 6 Cu²⁺, 6 SO₄²⁻, 30 H₂O, charge totale 0', b.compte['Cu2+'] === 6 && b.compte.SO4 === 6 && b.compte.H2O === 30 && b.charge === 0, JSON.stringify(b));
+  verifier('motif : 5 molécules d\'eau par unité CuSO₄', m.unites.every((_, u) => m.eaux.filter((e) => e.unite === u).length === 5));
+  const d3 = (a, c) => norme(soustraire(a, c));
+  let geo = true, detail = '';
+  m.unites.forEach((u, k) => {
+    const cu = m.atomes[u.Cu].pos;
+    const liees = m.eaux.filter((e) => e.unite === k && e.site !== 'libre');
+    if (liees.length !== 4 || liees.some((e) => Math.abs(d3(e.pos, cu) - dh.motif.Cu_O_eau_pm) > 0.01)) { geo = false; detail = 'eau liée'; }
+    const libre = m.eaux.find((e) => e.unite === k && e.site === 'libre');
+    if (m.atomes.filter((x) => x.role === 'Cu').some((x) => d3(x.pos, libre.pos) < 300)) { geo = false; detail = '5e eau trop près d\'un Cu'; }
+    const Osulf = m.atomes.filter((x) => x.role === 'sulfate');
+    const axiaux = Osulf.filter((x) => Math.abs(d3(x.pos, cu) - dh.motif.Cu_O_sulfate_pm) < 0.01).length;
+    const premier = k % dh.motif.unites_par_chaine === 0;
+    if (axiaux !== (premier ? 1 : 2)) { geo = false; detail = `O de sulfate autour du Cu ${k} : ${axiaux}`; }
+  });
+  verifier('motif : 4 H₂O à 196 pm du Cu²⁺, 2 O de sulfate à 240 pm (1 au bout de chaîne), 5e H₂O non liée au cuivre', geo, detail);
+  let soOk = true;
+  for (const [i, j] of m.liaisons) if (m.atomes[i].role === 'S' && Math.abs(d3(m.atomes[i].pos, m.atomes[j].pos) - 148) > 0.01) soOk = false;
+  verifier('ions sulfate : S–O = 148 pm', soOk);
+  let minNonLies = Infinity;
+  const groupe = (i) => { const x = m.atomes[i]; if (x.role === 'eau') return 'E' + m.eaux.findIndex((e) => e.O === i || e.H.includes(i)); if (x.role === 'Cu') return 'C' + i; return 'S' + x.unite; };
+  for (let i = 0; i < m.atomes.length; i++) for (let j = i + 1; j < m.atomes.length; j++) {
+    if (groupe(i) === groupe(j)) continue;
+    const dd = d3(m.atomes[i].pos, m.atomes[j].pos);
+    const cu = m.atomes[i].role === 'Cu' || m.atomes[j].role === 'Cu';
+    if (!cu) minNonLies = Math.min(minNonLies, dd);
+  }
+  verifier('aucun atome trop près d\'un autre groupe (hors cuivre) : plus de 170 pm', minNonLies > 170, `${minNonLies.toFixed(0)} pm`);
+
+  const p = planChauffage(dh, m);
+  let cons = true, rigide = true, pire = 0;
+  for (let t = 0; t <= 62; t += 0.25) {
+    const e = etatChauffage(p, t);
+    const k = controlerChauffage(p, e);
+    if (k.total !== 30) cons = false;
+    pire = Math.max(pire, k.pireOH, k.pireAngleDeg);
+    if (k.pireOH > 0.01 || k.pireAngleDeg > 0.01) rigide = false;
+  }
+  verifier('conservation toutes les 0,25 s : 30 molécules d\'eau (dans le solide + sorties)', cons);
+  verifier('molécules d\'eau intactes (O–H 96 pm, H–O–H 104,5°)', rigide, String(pire));
+  const niveaux = dh.chauffage.paliers.map((pa) => etatChauffage(p, pa.fin).solide / 6);
+  verifier('paliers : 5 → 3 → 1 → 0 molécule d\'eau par unité CuSO₄', niveaux.join(',') === '3,1,0' && etatChauffage(p, 0).solide === 30, niveaux.join(','));
+  verifier('après l\'ajout d\'eau : de nouveau 5 par unité', etatChauffage(p, 60).solide === 30);
+  const T = dh.chauffage.paliers.map((pa) => Math.round(temperature(p, pa.fin - 0.01)));
+  verifier('températures des paliers : 80, 120, 250 °C', T.join(',') === '80,120,250', T.join(','));
+  let monotone = true;
+  for (let t = 0.1; t < 42; t += 0.1) if (temperature(p, t) < temperature(p, t - 0.1) - 1e-9) monotone = false;
+  verifier('la température ne baisse jamais pendant le chauffage', monotone);
+  let depAvant = true;
+  for (const e of p.eaux) {
+    const pa = dh.chauffage.paliers[e.palier];
+    if (!(e.depart >= pa.departs[0] - 1e-9 && e.depart <= pa.departs[1] + 1e-9 && e.depart >= pa.debut + pa.montee - 1e-9)) depAvant = false;
+  }
+  verifier('chaque molécule part pendant son palier, une fois la température atteinte', depAvant);
+  // Une molécule qui part ou qui arrive ne traverse aucun autre atome (plus de 180 pm entre centres).
+  const fixesPos = m.atomes.filter((x) => x.role !== 'eau').map((x) => x.pos);
+  let passe = Infinity;
+  for (let t = 0; t <= 60; t += 0.1) {
+    const e = etatChauffage(p, t);
+    for (let k = 0; k < 30; k++) {
+      if (e.fondu[k] > 0.7) continue;
+      const o = [e.O[k * 3], e.O[k * 3 + 1], e.O[k * 3 + 2]];
+      if (d3(o, p.eaux[k].pos) < 5) continue;
+      for (const f of fixesPos) passe = Math.min(passe, d3(o, f));
+      for (let j = 0; j < 30; j++) if (j !== k && e.fondu[j] <= 0.7) passe = Math.min(passe, d3(o, [e.O[j * 3], e.O[j * 3 + 1], e.O[j * 3 + 2]]));
+    }
+  }
+  verifier('une molécule d\'eau qui part ou arrive ne traverse aucun autre atome (> 180 pm)', passe > 180, `${passe.toFixed(0)} pm`);
+}
 
 console.log('Textes');
 let refuse = false;

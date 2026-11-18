@@ -4,12 +4,10 @@
 import { el } from './dom.js';
 import { Rendu } from '../moteur/rendu.js';
 import { Rendu2D } from '../moteur/rendu2d.js';
-import { Camera } from '../moteur/camera.js';
 import { ecrireLongueur, barreEchelle, graduations } from '../moteur/echelle.js';
-import { dessinerMacro, dessinerRepere } from '../scenes/nacl/macro.js';
-import { dessinerBecher } from '../scenes/nacl/becher.js';
 
-const INTERRUPTEURS = [
+// Catalogue des interrupteurs. Chaque scène dit lesquels elle utilise (scene.interrupteurs).
+const INTERRUPTEURS_TOUS = [
   { nom: 'etiquettes', cle: 'inter-etiquettes', touche: 'e' },
   { nom: 'voisins', cle: 'inter-voisins', touche: 'v' },
   { nom: 'compteurs', cle: 'inter-compteurs', touche: 'c' },
@@ -25,6 +23,9 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   racine.innerHTML = '';
   const infos = contenu.scenes[id];
   const T = (cle, attrs = {}, tag = 'span') => textes.bloc(tag, cle, id, attrs);
+  // La scène est créée plus bas ; la liste de ses interrupteurs est lue dans ses données (ou toutes par défaut).
+  const nomsInter = infos.donnees.interrupteurs || INTERRUPTEURS_TOUS.map((i) => i.nom);
+  const INTERRUPTEURS = INTERRUPTEURS_TOUS.filter((i) => nomsInter.includes(i.nom));
 
   // ------------------------------------------------------------ structure DOM
   const canvasMacro = el('canvas', { class: 'couche couche-macro', 'aria-hidden': 'true' });
@@ -179,32 +180,41 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
 
   function majInterrupteurs() {
     for (const [nom, b] of Object.entries(boutonsInter)) b.setAttribute('aria-pressed', String(scene.etat.inter[nom]));
-    // δ+ δ− : seulement au niveau avancé (fiche NaCl §6).
-    for (const i of INTERRUPTEURS) if (i.avanceSeulement) boutonsInter[i.nom].hidden = !scene.etat.inter.avance;
-    // « Tailles réelles » : inutile pendant la dissolution, où tout est déjà à sa vraie taille.
-    for (const i of INTERRUPTEURS) if (i.temps1Seulement) boutonsInter[i.nom].hidden = !!scene.temps2;
-    equation.hidden = !scene.etat.inter.equation;
-    if (!equation.hidden && !equation.dataset.rempli) {
-      equation.append(T('equation-dissolution', { class: 'equation-formule' }, 'div'));
-      equation.dataset.rempli = '1';
+    // δ+ δ− : seulement au niveau avancé (fiche NaCl §6). Les autres cas sont décidés par la scène.
+    for (const i of INTERRUPTEURS) {
+      let visible = !i.avanceSeulement || scene.etat.inter.avance;
+      if (scene.interrupteurVisible) visible = visible && scene.interrupteurVisible(i.nom);
+      boutonsInter[i.nom].hidden = !visible;
     }
+    majEquation();
     compteurs.hidden = !scene.etat.inter.compteurs;
     majCompteurs();
   }
 
+  // Équation : la scène dit laquelle afficher (elle peut changer d'une étape à l'autre).
+  function majEquation() {
+    const cle = scene.etat.inter.equation ? scene.cleEquation : null;
+    equation.hidden = !cle;
+    if (cle && equation.dataset.cle !== cle) {
+      equation.innerHTML = '';
+      equation.append(T(cle, { class: 'equation-formule' }, 'div'));
+      equation.dataset.cle = cle;
+    }
+  }
+
+  // Compteurs : la scène fournit les lignes ({ couleur, texte, valeur, detail }) et une clé de changement.
   let cleCompteurs = '';
   function majCompteurs() {
     if (compteurs.hidden) return;
-    const b = scene.compteurs();
-    const cle = `${b.dansCristal}|${scene.temps2}`;
-    if (cle === cleCompteurs && compteurs.childElementCount) return;
-    cleCompteurs = cle;
+    const b = scene.lignesCompteurs((cle) => textes.brut(cle, id));
+    if (b.cle === cleCompteurs && compteurs.childElementCount) return;
+    cleCompteurs = b.cle;
     compteurs.innerHTML = '';
-    for (const [esp, n] of Object.entries(b.compte)) {
-      compteurs.append(el('div', {}, el('span', { class: 'puce', style: `background:${infos.donnees.especes[esp].couleur}` }), `${infos.donnees.especes[esp].etiquette} : `, el('strong', {}, String(n))));
+    for (const l of b.lignes) {
+      compteurs.append(el('div', { class: l.detail ? 'compteur-detail' : '' },
+        l.couleur ? el('span', { class: 'puce', style: `background:${l.couleur}` }) : null,
+        `${l.texte} : `, el('strong', {}, String(l.valeur)), l.suite || ''));
     }
-    compteurs.append(el('div', {}, `${textes.brut('compteur-charge')} : `, el('strong', {}, String(b.charge))));
-    if (scene.temps2) compteurs.append(el('div', { class: 'compteur-detail' }, `${textes.brut('compteur-cristal')} : `, el('strong', {}, String(b.dansCristal)), ` / ${b.total}`));
   }
 
   for (const i of INTERRUPTEURS) {
@@ -294,7 +304,6 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
   document.addEventListener('keydown', clavier);
 
   // ------------------------------------------------------------ dessin
-  const camEncart = new Camera();
   let ecran = { l: 1, h: 1, dpr: 1 };
   function dimensionner() {
     const r = vue.getBoundingClientRect();
@@ -333,18 +342,20 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       if (cleInstr) instrument.append(T(cleInstr));
     }
     // Message
-    let cle = scene.message();
-    if (!cle && scene.etape.type === 'exploration') cle = scene.etat.inter.maille ? 'aide-maille' : 'coin-du-grain';
+    // Message : clé de texte, ou { cle, aide } (ligne d'aide plus petite en dessous).
+    let m = scene.message();
+    if (!m && scene.messageParDefaut) m = scene.messageParDefaut();
+    const cle = m && typeof m === 'object' ? `${m.cle}|${m.aide}` : m;
     if (cle !== derniereCle) {
       derniereCle = cle;
       message.innerHTML = '';
-      if (cle) {
-        message.append(T(cle, {}, 'span'));
-        if (cle === 'coin-du-grain') message.append(el('br'), T('aide-reseau', { class: 'aide' }));
-        if (cle === 'aide-maille') message.append(el('br'), T('aide-reseau', { class: 'aide' }));
+      if (m) {
+        message.append(T(m.cle || m, {}, 'span'));
+        if (m.aide) message.append(el('br'), T(m.aide, { class: 'aide' }));
       }
-      message.classList.toggle('vide', !cle);
+      message.classList.toggle('vide', !m);
     }
+    majEquation();
     btnLecture.textContent = scene.etat.lecture ? '❚❚ ' + textes.brut('bouton-pause') : '▶ ' + textes.brut('bouton-lecture');
     majCompteurs();
     // Encart macro
@@ -353,21 +364,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const ew = encartCanvas.width / dpr, eh = encartCanvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ew, eh);
-    if (scene.temps2) {
-      dessinerBecher(ctx, ew, eh, scene.fractionCristal, scene.etat.tc, infos.donnees.affichage.fond);
-      encartLegende.textContent = 'bécher';
-      return;
-    }
-    camEncart.base = scene.baseDepart;
-    camEncart.ecran = { l: ew, h: eh };
-    const grand = W > 4e-3;
-    camEncart.largeur = grand ? 0.13 : 1.4e-3;
-    camEncart.centre = grand ? scene.centrePour(0.1) : [scene.L / 2, -scene.L / 2, scene.L / 2];
-    ctx.fillStyle = infos.donnees.affichage.fond;
-    ctx.fillRect(0, 0, ew, eh);
-    dessinerMacro(ctx, camEncart, scene.decor, { couleurTable: infos.donnees.affichage.couleur_support, opaciteFaces: 1 });
-    dessinerRepere(ctx, camEncart, scene.camera);
-    encartLegende.textContent = grand ? 'salière' : 'grain de sel';
+    const legende = scene.dessinerEncart(ctx, ew, eh);
+    if (encartLegende.textContent !== legende) encartLegende.textContent = legende;
   }
 
   const texteRepere = textes.brut('repere-noyau', id);

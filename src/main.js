@@ -6,8 +6,9 @@ import { Textes } from './interface/dom.js';
 import { afficherAccueil } from './interface/accueil.js';
 import { afficherScene } from './interface/vue-scene.js';
 import { SceneNaCl } from './scenes/nacl/scene.js';
+import { SceneHydrate } from './scenes/hydrate/scene.js';
 
-const CLASSES = { nacl: SceneNaCl };
+const CLASSES = { nacl: SceneNaCl, hydrate: SceneHydrate };
 
 const brouillon = new URLSearchParams(location.search).has('brouillon');
 const textes = new Textes(contenu, brouillon);

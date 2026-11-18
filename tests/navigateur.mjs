@@ -38,7 +38,7 @@ try {
   await page.goto(url + '?brouillon');
   await page.reload();
   await attendre(page);
-  verifier('mode brouillon : la scène est listée', (await page.locator('.carte-scene').count()) === 1);
+  verifier('mode brouillon : les 2 scènes sont listées', (await page.locator('.carte-scene').count()) === 2);
 
   console.log('Scène NaCl, temps 1 (WebGL)');
   await page.goto(url + '?brouillon#nacl');
@@ -278,6 +278,73 @@ try {
   // Critère 8 : capture sur fond blanc.
   const [telechargement] = await Promise.all([page.waitForEvent('download'), page.locator('button', { hasText: 'Capture' }).click()]);
   verifier('capture : un fichier PNG est produit', /\.png$/.test(telechargement.suggestedFilename()), telechargement.suggestedFilename());
+  await page.context().close();
+
+  console.log('Scène hydrate (fiche F-E)');
+  page = await nouvellePage();
+  await page.goto(url + '?brouillon#hydrate');
+  await page.reload();
+  await attendre(page);
+  const etatH = () => page.evaluate(() => { const s = window.__monde.scene; return { etape: s.etape.id, largeur: s.etat.largeur, tc: s.etat.tc, lecture: s.etat.lecture }; });
+  verifier('hydrate : la scène commence par la question 1, figée', (await etatH()).etape === 'question-1' && await page.locator('.question').isVisible());
+  const interH = await page.locator('.inter').count();
+  verifier('hydrate : 5 interrupteurs (étiquettes, compteurs, tailles réelles, avancé, équation)', interH === 5, String(interH));
+  await page.keyboard.press('ArrowRight');
+  verifier('hydrate : étape de zoom depuis 2 cm', (await etatH()).etape === 'zoom' && (await etatH()).largeur === 0.02);
+  await page.locator('.bouton-lecture').click();
+  await page.waitForTimeout(800);
+  const zH = await etatH();
+  verifier('hydrate : le zoom avance tout seul', zH.lecture && zH.largeur < 0.015, JSON.stringify(zH));
+  await page.keyboard.press('ArrowRight');
+  verifier('hydrate : exploration du motif à 4 nm', (await etatH()).etape === 'motif' && Math.abs((await etatH()).largeur - 4e-9) < 1e-15);
+  await page.keyboard.press('c');
+  const cH = await page.locator('.compteurs').innerText();
+  verifier('hydrate : compteurs 6 Cu²⁺, 6 SO₄²⁻, 30 H₂O, charge 0, 5 par unité', /Cu²⁺ : 6/.test(cH) && /SO₄²⁻ : 6/.test(cH) && /solide : 30/.test(cH) && /Charge totale : 0/.test(cH) && /CuSO₄ : 5/.test(cH), cH);
+  // Tous les interrupteurs, à toutes les étapes, sans erreur ; retour en arrière.
+  const nH = await page.evaluate(() => window.__monde.scene.etapes.length);
+  let interOkH = true;
+  for (let i = 0; i < nH; i++) {
+    await page.evaluate((i) => { window.__monde.scene.allerEtape(i); }, i);
+    for (const k of ['e', 'c', 't', 'a', 'q']) { await page.keyboard.press(k); await page.keyboard.press(k); }
+    await page.waitForTimeout(40);
+  }
+  verifier(`hydrate : les interrupteurs fonctionnent aux ${nH} étapes`, interOkH && erreurs.length === 0, erreurs.join(' | '));
+  // Paliers : nombre de molécules dans le solide et équation de chaque palier.
+  const paliers = await page.evaluate(() => {
+    const s = window.__monde.scene;
+    return ['palier-1', 'palier-2', 'palier-3', 'ajout-eau'].map((id) => {
+      const e = s.etapes.find((x) => x.id === id);
+      s.allerEtape(s.etapes.indexOf(e));
+      s.etat.lecture = false; s.etat.tc = e.fin; s.appliquerTemps();
+      return [s.etatEau.solide, s.cleEquation];
+    });
+  });
+  verifier('hydrate : fin des paliers 18, 6, 0 puis 30 molécules d\'eau dans le solide', paliers.map((x) => x[0]).join(',') === '18,6,0,30', JSON.stringify(paliers));
+  await page.evaluate(() => { const s = window.__monde.scene; s.allerEtape(s.etapes.findIndex((x) => x.id === 'palier-1')); });
+  await page.keyboard.press('q');
+  await page.waitForTimeout(100);
+  verifier('hydrate : équation du palier affichée (image vectorielle)', await page.locator('.equation svg').count() === 1);
+  await page.keyboard.press('q');
+  await page.waitForTimeout(1200);
+  const pH = await etatH();
+  verifier('hydrate : le chauffage se joue tout seul', pH.etape === 'palier-1' && pH.tc > 0.5, JSON.stringify(pH));
+  const encartH = await page.locator('.encart-legende').innerText();
+  verifier('hydrate : encart = tube à essai', encartH === 'tube à essai', encartH);
+  await page.locator('.pastille').last().click();
+  const finH = await page.locator('.question').innerText();
+  verifier('hydrate : mise en commun affichée, sans « null »', /Où était l'eau/.test(finH) && !finH.includes('null'), finH.slice(0, 60));
+  await page.goto(url + '?brouillon&2d#hydrate/motif');
+  await page.reload();
+  await attendre(page);
+  await page.waitForTimeout(300);
+  const pixH = await page.evaluate(() => {
+    const c = document.querySelector('.couche-gl');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 0) n++;
+    return n;
+  });
+  verifier('hydrate, mode 2D : le motif est dessiné', pixH > 100, String(pixH));
   await page.context().close();
 
   // Critère 6 : au doigt (écran tactile de téléphone).

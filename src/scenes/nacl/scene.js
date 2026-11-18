@@ -6,7 +6,8 @@
 import { Camera } from '../../moteur/camera.js';
 import { baseDepuisVisee, interpolerBase, tourner, melanger, lisse, borner, couleurRvb, scalaire, soustraire } from '../../moteur/vec.js';
 import { genererCristal, genererSurface, voisins, bilan, aleatoire } from './reseau.js';
-import { creerDecor, dessinerMacro } from './macro.js';
+import { creerDecor, dessinerMacro, dessinerRepere } from './macro.js';
+import { dessinerBecher } from './becher.js';
 import { dessinerAtome, fondusAtome } from './atome.js';
 import { planDissolution, etatDissolution, positionIon, tempsJoue } from './dissolution.js';
 
@@ -495,6 +496,48 @@ export class SceneNaCl {
   compteurs() {
     const dansCristal = this.temps2 ? this.etat2.dansCristal.reduce((s, x) => s + x, 0) : this.cristal.length;
     return { ...this.bilan, dansCristal, total: this.cristal.length };
+  }
+
+  // Lignes des compteurs (interface). t(cle) : texte de l'interface ou de la scène.
+  lignesCompteurs(t) {
+    const b = this.compteurs();
+    const lignes = Object.entries(b.compte).map(([esp, n]) => ({ couleur: this.d.especes[esp].couleur, texte: this.d.especes[esp].etiquette, valeur: n }));
+    lignes.push({ texte: t('compteur-charge'), valeur: b.charge });
+    if (this.temps2) lignes.push({ detail: true, texte: t('compteur-cristal'), valeur: b.dansCristal, suite: ` / ${b.total}` });
+    return { cle: `${b.dansCristal}|${this.temps2}`, lignes };
+  }
+
+  get cleEquation() { return 'equation-dissolution'; }
+
+  interrupteurVisible(nom) {
+    // « Tailles réelles » : inutile pendant la dissolution, où tout est déjà à sa vraie taille.
+    return !(nom === 'tailles' && this.temps2);
+  }
+
+  messageParDefaut() {
+    if (this.etape.type !== 'exploration') return null;
+    return { cle: this.etat.inter.maille ? 'aide-maille' : 'coin-du-grain', aide: 'aide-reseau' };
+  }
+
+  // Encart macro (en haut à gauche) : salière, grain, ou bécher au temps 2. Renvoie la légende.
+  dessinerEncart(ctx, ew, eh) {
+    if (this.temps2) {
+      dessinerBecher(ctx, ew, eh, this.fractionCristal, this.etat.tc, this.d.affichage.fond);
+      return 'bécher';
+    }
+    if (!this.camEncart) this.camEncart = new Camera();
+    const cam = this.camEncart;
+    const W = this.etat.largeur;
+    cam.base = this.baseDepart;
+    cam.ecran = { l: ew, h: eh };
+    const grand = W > 4e-3;
+    cam.largeur = grand ? 0.13 : 1.4e-3;
+    cam.centre = grand ? this.centrePour(0.1) : [this.L / 2, -this.L / 2, this.L / 2];
+    ctx.fillStyle = this.d.affichage.fond;
+    ctx.fillRect(0, 0, ew, eh);
+    dessinerMacro(ctx, cam, this.decor, { couleurTable: this.d.affichage.couleur_support, opaciteFaces: 1 });
+    dessinerRepere(ctx, cam, this.camera);
+    return grand ? 'salière' : 'grain de sel';
   }
 
   // Fraction des ions encore dans le cristal (taille du grain dans le bécher).

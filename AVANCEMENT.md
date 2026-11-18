@@ -1,22 +1,24 @@
 # Avancement
 
-Mis à jour le 16 novembre 2026. Documents de référence (projet EPIC) : `monde-micro-protocole-execution.md`, `monde-micro-dossier-de-conception.md` (v0.3), `monde-micro-fiche-scene-nacl.md` (v0.4).
+Mis à jour le 18 novembre 2026. Documents de référence (projet EPIC) : `monde-micro-protocole-execution.md`, `monde-micro-dossier-de-conception.md` (v0.3), `monde-micro-fiche-scene-nacl.md` (v0.6), `monde-micro-fiches-lot1-ch4-ch5.md` (fiches du chapitre 4), `monde-micro-revision-2026-11-16.md`, `monde-micro-insertion-polycopie.md`.
 
 ## Scènes
 
 | Scène | Statut | Fait | Reste |
 |---|---|---|---|
+| Hydrate — l'eau dans le cristal (fiche F-E, chapitre 4.2) | brouillon | Question 1, zoom des cristaux bleus au motif (2 cm → 4 nm), exploration du motif (Cu²⁺, SO₄²⁻, 5 H₂O par unité), question 2, chauffage par paliers 5 → 3 → 1 → 0 (≈ 80, 120, 250 °C) avec équations, réhydratation, mise en commun ; tube à essai (couleur, flamme, buée, température) ; compteurs | Relecture de Roger (panneau « à contrôler ») |
 | NaCl — du grain de sel aux ions | brouillon | Temps 2 (refait le 16.11.2026, modèle de la diffusion) : question 2, eau autour du grain dès le départ, un Na⁺ puis un Cl⁻ se détachent et diffusent (échanges lents), le grain se dissout, solution (chaque ion avec 6 molécules d'eau), eau compacte et vraies tailles au temps 2, mise en commun, bécher, équation, δ+ δ− (avancé), suivre un ion. Temps 1 (accepté) : question 1, zoom texturé de 10 cm à 300 pm avec instruments, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles, maille), zoom dans l'ion jusqu'au noyau (Bohr / nuage), capture sur fond blanc | Fichier HTML unique de repli ; relecture de Roger |
 
 ## Livraisons
 
 1. **J1a — le zoom, seul (accepté).** C'est le point le plus risqué du projet : il est livré en premier. À relire : https://monde-microscopique.github.io/?brouillon#nacl
 2. J1b — la dissolution (temps 2) : première version le 16.11.2026 (refusée : « voyageurs dans un train ») ; refaite le même jour sur le modèle de la diffusion, puis retouchée (eau compacte, vraies tailles, 6 molécules par ion, étiquettes O et H), en relecture.
-3. J1c — finitions : niveau avancé, suivre une particule, fichier HTML unique de repli, réglages de fluidité sur téléphone réel.
+3. **Chapitre 4 (rang 1 du protocole), dans l'ordre décidé par Roger le 18.11.2026 : F-E (hydrate, livrée le 18.11.2026), puis F-D, F-C, F-B**, avec la visionneuse de molécules (F-A).
+4. J1c — finitions : niveau avancé, suivre une particule, fichier HTML unique de repli, réglages de fluidité sur téléphone réel.
 
 ## Contrôles automatiques
 
-À chaque envoi : 81 contrôles sans navigateur (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 54 contrôles dans Chrome (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+À chaque envoi : 94 contrôles sans navigateur (dont 13 pour l'hydrate : motif, distances, conservation de l'eau, paliers, températures, trajets sans traversée) (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 67 contrôles dans Chrome (dont 13 pour l'hydrate) (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
 
 Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
 
