@@ -11,8 +11,10 @@ import { planChauffage, etatChauffage, temperature } from './deshydratation.js';
 import { dessinerCristaux, dessinerTube } from './macro.js';
 
 const PM = 1e-12;
+const SEUIL_ROTATION_ZOOM = 5e-9; // m : au-dessous, plus de cristaux dessinés (dessin plan) à l'écran
 const log10 = Math.log10;
-const ETIQUETTE = { Cu: 'Cu²⁺', S: 'SO₄²⁻' };
+// Étiquettes : l'identité de chaque atome, dans l'atome (décision de Roger du 20.11.2026).
+const ETIQUETTE = { 'Cu2+': 'Cu²⁺', S: 'S', O: 'O', H: 'H' };
 
 // Couleur du solide selon le nombre moyen de molécules d'eau par unité CuSO₄ (interpolée entre les hydrates).
 function couleurSolide(couleurs, n) {
@@ -58,9 +60,14 @@ export class SceneHydrate {
       return { pos: [x.pos[0] + decalage[0], x.pos[1] + decalage[1], x.pos[2] + decalage[2]], rayon: e.rayon_pm, couleur: couleurRvb(e.couleur), phase: ph || phaseDe(i) };
     };
 
-    // Atomes fixes (Cu²⁺, ions sulfate) et molécules d'eau (mobiles).
-    this.fixes = this.motif.atomes.map((x, i) => i).filter((i) => this.motif.atomes[i].role !== 'eau');
+    // Atomes fixes : ions sulfate ; ions Cu²⁺ (deux lots : agrandi avec les boules réduites, vrai rayon avec
+    // « tailles réelles ») ; molécules d'eau (mobiles).
+    this.fixes = this.motif.atomes.map((x, i) => i).filter((i) => ['S', 'sulfate'].includes(this.motif.atomes[i].role));
     this.spheresFixes = this.fixes.map((i) => sphere(i));
+    this.cuivres = this.motif.atomes.map((x, i) => i).filter((i) => this.motif.atomes[i].role === 'Cu');
+    const grand = esp['Cu2+'].agrandissement_affichage || 1;
+    this.spheresCuReel = this.cuivres.map((i) => sphere(i));
+    this.spheresCuGrand = this.spheresCuReel.map((x) => ({ ...x, rayon: x.rayon * grand }));
     this.spheresO = this.motif.eaux.map((e) => sphere(e.O));
     this.spheresH = this.motif.eaux.flatMap((e) => e.H.map((h) => sphere(h)));
     const rb = this.d.motif.rayon_baton_pm;
@@ -96,16 +103,23 @@ export class SceneHydrate {
       this.lotCopies = rendu.creerLot(this.spheresCopies);
       this.batonsCopies = rendu.creerBatons(batonsCopies);
       this.lotFixes = rendu.creerLot(this.spheresFixes);
+      this.lotCuGrand = rendu.creerLot(this.spheresCuGrand);
+      this.lotCuReel = rendu.creerLot(this.spheresCuReel);
       this.lotBatonsFixes = rendu.creerBatons(this.batonsFixes);
       this.lotO = rendu.creerLot(this.spheresO, { dynamique: true });
       this.lotH = rendu.creerLot(this.spheresH, { dynamique: true });
       this.lotBatonsEau = rendu.creerBatons(this.batonsEau, { dynamique: true });
-      rendu.creerAtlas(['Cu²⁺', 'SO₄²⁻', 'H₂O']);
-      this.etiqFixes = rendu.creerEtiquettes(this.lotFixes, this.fixes.map((i, k) => ({ i, k }))
-        .filter(({ i }) => ETIQUETTE[this.motif.atomes[i].role]).map(({ i, k }) => ({ index: k, texte: ETIQUETTE[this.motif.atomes[i].role] })));
-      this.etiqEau = rendu.creerEtiquettes(this.lotO, this.motif.eaux.map((_, k) => ({ index: k, texte: 'H₂O' })));
-      // Le Cu²⁺ est petit (rayon ionique 73 pm) : son étiquette doit rester visible même quand la boule est petite.
-      this.etiqFixes.seuil = this.etiqEau.seuil = 3;
+      rendu.creerAtlas(Object.values(ETIQUETTE));
+      const tous = (lot, n, texte) => rendu.creerEtiquettes(lot, Array.from({ length: n }, (_, k) => ({ index: k, texte: typeof texte === 'function' ? texte(k) : texte })));
+      this.etiquettes = [
+        tous(this.lotFixes, this.fixes.length, (k) => ETIQUETTE[this.motif.atomes[this.fixes[k]].espece]),
+        tous(this.lotCuGrand, this.cuivres.length, 'Cu²⁺'),
+        tous(this.lotCuReel, this.cuivres.length, 'Cu²⁺'),
+        tous(this.lotO, this.motif.eaux.length, 'O'),
+        tous(this.lotH, this.motif.eaux.length * 2, 'H'),
+      ];
+      [this.etiqFixes, this.etiqCuGrand, this.etiqCuReel, this.etiqEauO, this.etiqEauH] = this.etiquettes;
+      for (const e of this.etiquettes) e.seuil = 3;
     }
 
     this.etapes = this.d.etapes.map((e) => ({ ...e }));
@@ -183,7 +197,8 @@ export class SceneHydrate {
       this.lotO.definirEtats(fe.map((v) => [v, 0, 0]));
       this.lotH.definirEtats(fe.flatMap((v) => [[v, 0, 0], [v, 0, 0]]));
       this.lotBatonsEau.definirFondus(fe.flatMap((v) => [v, v]));
-      this.etiqEau.fondre(fe);
+      this.etiqEauO.fondre(fe);
+      this.etiqEauH.fondre(fe.flatMap((v) => [v, v]));
     }
   }
 
@@ -214,8 +229,15 @@ export class SceneHydrate {
     this.etat.inter[nom] = !this.etat.inter[nom];
   }
 
+  // Rotation : exploration, animations, et zoom dès que les particules sont seules à l'écran.
+  // Si l'on dézoome au-delà, la vue revient doucement à l'orientation de départ (le dessin des cristaux en dépend).
+  get rotationPermise() {
+    const t = this.etape.type;
+    return t === 'exploration' || t === 'choregraphie' || (t === 'zoom' && this.etat.largeur <= SEUIL_ROTATION_ZOOM);
+  }
+
   tourner(dxPx, dyPx) {
-    if (this.etape.type !== 'exploration' && this.etape.type !== 'choregraphie') return;
+    if (!this.rotationPermise) return;
     const a = 0.008;
     let { droite, haut, avant } = this.camera.base;
     avant = tourner(avant, haut, -dxPx * a); droite = tourner(droite, haut, -dxPx * a);
@@ -258,11 +280,14 @@ export class SceneHydrate {
       if (this.etat.tc >= e.fin) { this.etat.tc = e.fin; this.etat.lecture = false; }
     }
     if (this.temps2) this.appliquerTemps();
+    if (e.type === 'zoom' && this.etat.largeur > SEUIL_ROTATION_ZOOM * 1.05 && !this.etat.retourBase && this.camera.base !== this.baseDepart) {
+      this.etat.retourBase = { de: this.camera.base, t: 0 };
+    }
     if (this.etat.retourBase) {
       const rb = this.etat.retourBase;
       rb.t = Math.min(1, rb.t + dt / 0.6);
       this.camera.base = interpolerBase(rb.de, this.baseDepart, lisse(0, 1, rb.t));
-      if (rb.t >= 1) this.etat.retourBase = null;
+      if (rb.t >= 1) { this.etat.retourBase = null; this.camera.base = this.baseDepart; }
     }
   }
 
@@ -292,7 +317,12 @@ export class SceneHydrate {
     if (f.particules < 0.002) return;
     this.majCopies(f.copies);
     const T = this.temps2 ? (temperature(this.plan, this.etat.tc) ?? 20) : 20;
-    this.etiqFixes.opacite = this.etiqEau.opacite = this.etat.inter.etiquettes ? 1 : 0;
+    const reel = this.etat.inter.tailles;
+    this.lotCuGrand.visible = !reel;
+    this.lotCuReel.visible = reel;
+    for (const e of this.etiquettes) e.opacite = this.etat.inter.etiquettes ? 1 : 0;
+    this.etiqCuGrand.opacite *= reel ? 0 : 1;
+    this.etiqCuReel.opacite *= reel ? 1 : 0;
     r.dessiner({
       base: c.base,
       centrePm: c.centre.map((v) => v / PM),

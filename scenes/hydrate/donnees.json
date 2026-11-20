@@ -26,7 +26,9 @@
    "rayon_pm": 73,
    "couleur": "#B8692E",
    "charge": 2,
-   "source_rayon": "rayon ionique de Cu²⁺ (coordinence 6), de mémoire, à contrôler (tables CRM)"
+   "source_rayon": "rayon ionique de Cu²⁺ (coordinence 6), de mémoire, à contrôler (tables CRM)",
+   "agrandissement_affichage": 2.5,
+   "source_agrandissement": "décision de Roger du 20.11.2026 : Cu²⁺ trop petit à côté de l'eau ; dessiné 2,5 fois plus gros avec les boules réduites, annoncé « pas à l'échelle » ; à sa vraie taille avec l'interrupteur « tailles réelles »"
   },
   "S": {
    "etiquette": "S",

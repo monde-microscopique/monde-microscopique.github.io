@@ -12,6 +12,7 @@ import { dessinerAtome, fondusAtome } from './atome.js';
 import { planDissolution, etatDissolution, positionIon, tempsJoue } from './dissolution.js';
 
 const PM = 1e-12;
+const SEUIL_ROTATION_ZOOM = 4e-9; // m : au-dessous, plus de faces du grain dessinées
 const log10 = Math.log10;
 
 export class SceneNaCl {
@@ -217,8 +218,11 @@ export class SceneNaCl {
     this.majEtatsCristal();
   }
 
+  // Rotation : exploration, animations, et zoom dès que les ions sont seuls à l'écran (faces du grain effacées).
+  // Si l'on dézoome au-delà, la vue revient doucement à l'orientation de départ (le dessin du grain en dépend).
   get rotationPermise() {
-    return this.etape.type === 'exploration' || this.etape.type === 'choregraphie';
+    const t = this.etape.type;
+    return t === 'exploration' || t === 'choregraphie' || (t === 'zoom' && this.etat.largeur <= SEUIL_ROTATION_ZOOM);
   }
 
   tourner(dxPx, dyPx) {
@@ -388,11 +392,14 @@ export class SceneNaCl {
       const cle = `${this.etat.inter.maille && [...this.maille.membres].every((i) => this.etat2.dansCristal[i] === 1)}|${this.etat.inter.voisins && this.etat2.dansCristal[this.etat.selection] === 1}|${this.etat2.dansCristal.reduce((s, x) => s + x, 0)}`;
       if (cle !== this.cleEtats && (this.etat.inter.maille || this.etat.inter.voisins)) this.majEtatsCristal();
     }
+    if (e.type === 'zoom' && this.etat.largeur > SEUIL_ROTATION_ZOOM * 1.05 && !this.etat.retourBase && this.camera.base !== this.baseDepart) {
+      this.etat.retourBase = { de: this.camera.base, t: 0 };
+    }
     if (this.etat.retourBase) {
       const rb = this.etat.retourBase;
       rb.t = Math.min(1, rb.t + dt / 0.6);
       this.camera.base = interpolerBase(rb.de, this.baseDepart, lisse(0, 1, rb.t));
-      if (rb.t >= 1) this.etat.retourBase = null;
+      if (rb.t >= 1) { this.etat.retourBase = null; this.camera.base = this.baseDepart; }
     }
   }
 

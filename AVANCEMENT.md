@@ -1,6 +1,6 @@
 # Avancement
 
-Mis à jour le 18 novembre 2026. Documents de référence (projet EPIC) : `monde-micro-protocole-execution.md`, `monde-micro-dossier-de-conception.md` (v0.3), `monde-micro-fiche-scene-nacl.md` (v0.6), `monde-micro-fiches-lot1-ch4-ch5.md` (fiches du chapitre 4), `monde-micro-revision-2026-11-16.md`, `monde-micro-insertion-polycopie.md`.
+Mis à jour le 20 novembre 2026. Documents de référence (projet EPIC) : `monde-micro-protocole-execution.md`, `monde-micro-dossier-de-conception.md` (v0.3), `monde-micro-fiche-scene-nacl.md` (v0.6), `monde-micro-fiches-lot1-ch4-ch5.md` (fiches du chapitre 4), `monde-micro-revision-2026-11-16.md`, `monde-micro-insertion-polycopie.md`.
 
 ## Scènes
 
@@ -18,7 +18,7 @@ Mis à jour le 18 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 ## Contrôles automatiques
 
-À chaque envoi : 94 contrôles sans navigateur (dont 13 pour l'hydrate : motif, distances, conservation de l'eau, paliers, températures, trajets sans traversée) (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 67 contrôles dans Chrome (dont 13 pour l'hydrate) (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+À chaque envoi : 94 contrôles sans navigateur (dont 13 pour l'hydrate : motif, distances, conservation de l'eau, paliers, températures, trajets sans traversée) (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 71 contrôles dans Chrome (dont 16 pour l'hydrate, et la rotation pendant le zoom dans les deux scènes) (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
 
 Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
 

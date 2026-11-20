@@ -128,7 +128,7 @@ H₂O par unité CuSO₄
 
 ## simplifications
 - Le motif est schématique : la vraie structure du cristal est plus compliquée. Les proportions sont justes : pour un ion Cu²⁺ et un ion SO₄²⁻, 5 molécules d'eau ; 4 entourent le cuivre, la 5ᵉ n'est pas liée à lui.
-- Les boules sont dessinées plus petites que les ions et les atomes réels, toutes dans la même proportion. L'interrupteur « tailles réelles » les montre à leur vraie taille.
+- Les boules sont dessinées plus petites que les ions et les atomes réels, toutes dans la même proportion, **sauf l'ion Cu²⁺, dessiné 2,5 fois plus gros** pour qu'on le voie (pas à l'échelle). L'interrupteur « tailles réelles » montre tout à la vraie taille, Cu²⁺ compris.
 - Les liaisons covalentes (dans l'ion sulfate et dans l'eau) sont dessinées par des bâtons ; entre l'ion Cu²⁺ et ses voisins, aucun trait n'est dessiné.
 - On ne montre pas comment le solide se réarrange quand l'eau part, et on ne sait pas montrer exactement quelles molécules partent les premières.
 - Les températures des paliers sont des ordres de grandeur : elles dépendent de la vitesse de chauffage.

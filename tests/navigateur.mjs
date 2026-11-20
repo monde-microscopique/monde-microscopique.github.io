@@ -110,6 +110,19 @@ try {
   await page.evaluate(() => window.__monde.scene.definirLargeur(1e-6));
   await page.keyboard.press('ArrowUp');
   verifier('flèche haut : on s\'approche', (await etat()).largeur < 1e-6);
+  const rotN = await page.evaluate(async () => {
+    const s = window.__monde.scene;
+    s.etat.lecture = false;
+    const avant = () => s.camera.base.avant.slice();
+    s.etat.largeur = 1e-6; const a0 = avant(); s.tourner(60, 20); const a1 = avant();
+    s.etat.largeur = 3e-9; s.tourner(60, 20); const a2 = avant();
+    s.etat.largeur = 1e-6;
+    await new Promise((r) => setTimeout(r, 1200));
+    const a3 = avant();
+    const d = (x, y) => Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]);
+    return { loinBloque: d(a0, a1) < 1e-9, presTourne: d(a1, a2) > 0.05, retour: d(a3, a0) < 1e-6 };
+  });
+  verifier('NaCl, zoom : rotation seulement quand les ions sont seuls, puis retour à la vue de départ', rotN.loinBloque && rotN.presTourne && rotN.retour, JSON.stringify(rotN));
   await page.mouse.wheel(0, 300);
   await page.waitForTimeout(100);
   verifier('molette : on s\'éloigne', (await etat()).largeur > 1e-6);
@@ -295,8 +308,30 @@ try {
   await page.waitForTimeout(800);
   const zH = await etatH();
   verifier('hydrate : le zoom avance tout seul', zH.lecture && zH.largeur < 0.015, JSON.stringify(zH));
+  // Rotation pendant le zoom : interdite tant que les cristaux sont dessinés, permise ensuite ;
+  // en dézoomant, retour automatique à la vue de départ.
+  const rotZoom = await page.evaluate(async () => {
+    const s = window.__monde.scene;
+    s.etat.lecture = false;
+    const avant = () => s.camera.base.avant.slice();
+    s.etat.largeur = 1e-6; const a0 = avant(); s.tourner(60, 20); const a1 = avant();
+    s.etat.largeur = 3e-9; s.tourner(60, 20); const a2 = avant();
+    s.etat.largeur = 2e-8;
+    await new Promise((r) => setTimeout(r, 1200));
+    const a3 = avant();
+    const d = (x, y) => Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]);
+    return { loinBloque: d(a0, a1) < 1e-9, presTourne: d(a1, a2) > 0.05, retour: d(a3, a0) < 1e-6 };
+  });
+  verifier('hydrate, zoom : rotation seulement quand les particules sont seules, puis retour à la vue de départ', rotZoom.loinBloque && rotZoom.presTourne && rotZoom.retour, JSON.stringify(rotZoom));
   await page.keyboard.press('ArrowRight');
   verifier('hydrate : exploration du motif à 4 nm', (await etatH()).etape === 'motif' && Math.abs((await etatH()).largeur - 4e-9) < 1e-15);
+  await page.keyboard.press('e');
+  const etiqH = await page.evaluate(() => { const s = window.__monde.scene; return s.etiquettes.map((e) => [e.opacite, e.textes ? e.textes.length : null]); });
+  const textesH = await page.evaluate(() => [...new Set(window.__monde.scene.etiquettes.flatMap((e) => (e.items || []).map((x) => x.texte)))]);
+  verifier('hydrate : étiquettes = identité de chaque atome (Cu²⁺, S, O, H)', ['Cu²⁺', 'S', 'O', 'H'].every((t) => textesH.includes(t)) && !textesH.includes('H₂O') && !textesH.includes('SO₄²⁻'), JSON.stringify({ textesH, etiqH }));
+  await page.keyboard.press('e');
+  const cuTaille = await page.evaluate(() => { const s = window.__monde.scene; return [s.spheresCuGrand[0].rayon, s.spheresCuReel[0].rayon]; });
+  verifier('hydrate : Cu²⁺ dessiné 2,5 fois plus gros (vrai rayon avec « tailles réelles »)', cuTaille[0] === 182.5 && cuTaille[1] === 73, JSON.stringify(cuTaille));
   await page.keyboard.press('c');
   const cH = await page.locator('.compteurs').innerText();
   verifier('hydrate : compteurs 6 Cu²⁺, 6 SO₄²⁻, 30 H₂O, charge 0, 5 par unité', /Cu²⁺ : 6/.test(cH) && /SO₄²⁻ : 6/.test(cH) && /solide : 30/.test(cH) && /Charge totale : 0/.test(cH) && /CuSO₄ : 5/.test(cH), cH);
