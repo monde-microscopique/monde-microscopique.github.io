@@ -1,0 +1,29 @@
+{
+  "id": "composition",
+  "classe": "molecules",
+  "mode": "structure",
+  "interrupteurs": ["etiquettes", "compteurs", "formule", "hydrogenes", "compact", "plane"],
+  "affichage": {
+    "facteur_reduction": 0.28,
+    "rayon_baton_pm": 40,
+    "vibration_pm": 4,
+    "vitesse_vibration": 0.45,
+    "fond": "#E2E9F0",
+    "fond_capture": "#FFFFFF"
+  },
+  "echelle": { "regle_max_m": 0.1, "regle_min_m": 1e-10 },
+  "especes": {
+    "C": { "rayon_pm": 170, "couleur": "#3A3A3A", "charge": 0, "source_rayon": "rayon de van der Waals, valeur donnée de mémoire, à contrôler (table CRM)" },
+    "H": { "rayon_pm": 120, "couleur": "#F4F4F4", "charge": 0, "source_rayon": "rayon de van der Waals, valeur donnée de mémoire, à contrôler (table CRM)" },
+    "O": { "rayon_pm": 152, "couleur": "#D9261C", "charge": 0, "source_rayon": "rayon de van der Waals, valeur donnée de mémoire, à contrôler (table CRM)" }
+  },
+  "molecules": ["formaldehyde", "acide-acetique", "acide-lactique", "glucose"],
+  "etapes": [
+    { "id": "question-1", "type": "question", "texte": "question-1", "cacher_molecules": true },
+    { "id": "modeles", "type": "exploration", "titre": "etape-modeles", "message": "message-modeles" },
+    { "id": "compter", "type": "exploration", "titre": "etape-compter", "message": "message-compter", "inter": { "compteurs": true } },
+    { "id": "rapport", "type": "exploration", "titre": "etape-rapport", "message": "message-rapport", "inter": { "compteurs": true }, "rapport": true, "empirique": true },
+    { "id": "masses", "type": "exploration", "titre": "etape-masses", "message": "message-masses", "inter": { "compteurs": true, "formule": true }, "rapport": true, "empirique": true },
+    { "id": "mise-en-commun", "type": "question", "texte": "question-mise-en-commun", "inter": { "compteurs": true, "formule": true }, "rapport": true, "empirique": true }
+  ]
+}

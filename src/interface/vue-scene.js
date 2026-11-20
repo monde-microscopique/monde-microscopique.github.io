@@ -17,6 +17,10 @@ const INTERRUPTEURS_TOUS = [
   { nom: 'avance', cle: 'inter-avance', touche: 'a' },
   { nom: 'equation', cle: 'inter-equation', touche: 'q' },
   { nom: 'delta', cle: 'inter-delta', touche: 'd', avanceSeulement: true },
+  { nom: 'hydrogenes', cle: 'inter-hydrogenes', touche: 'h' },
+  { nom: 'formule', cle: 'inter-formule', touche: 'f' },
+  { nom: 'compact', cle: 'inter-compact', touche: 'k' },
+  { nom: 'plane', cle: 'inter-plane', touche: 'p' },
 ];
 
 export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScene, sousEtape) {
@@ -100,6 +104,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     }
   }
   const scene = new ClasseScene(infos.donnees, rendu, canvasMacro.getContext('2d'), canvasAtome.getContext('2d'));
+  // Textes bruts pour les scènes qui écrivent dans la vue (noms des molécules, par exemple).
+  scene.brut = (cle) => textes.brut(cle, id);
   const ech = infos.donnees.echelle;
   vue.style.background = infos.donnees.affichage.fond;
 
@@ -187,7 +193,8 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
       boutonsInter[i.nom].hidden = !visible;
     }
     majEquation();
-    compteurs.hidden = !scene.etat.inter.compteurs;
+    // Une scène peut afficher ses compteurs dans la vue elle-même (sous chaque molécule) : pas de boîte.
+    compteurs.hidden = !scene.etat.inter.compteurs || !!scene.compteursDansLaVue;
     majCompteurs();
   }
 
@@ -364,6 +371,9 @@ export function afficherScene(racine, contenu, textes, brouillon, id, ClasseScen
     const ew = encartCanvas.width / dpr, eh = encartCanvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, ew, eh);
+    // Pas d'encart si la scène n'en dessine pas.
+    encart.hidden = !scene.dessinerEncart;
+    if (!scene.dessinerEncart) return;
     const legende = scene.dessinerEncart(ctx, ew, eh);
     if (encartLegende.textContent !== legende) encartLegende.textContent = legende;
   }

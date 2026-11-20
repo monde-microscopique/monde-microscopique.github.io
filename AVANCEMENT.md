@@ -6,6 +6,7 @@ Mis à jour le 20 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 | Scène | Statut | Fait | Reste |
 |---|---|---|---|
+| Même composition, substances différentes (fiche F-D, chapitre 4.3) et visionneuse de molécules (fiche F-A) | brouillon | Prédiction ; formaldéhyde, acide acétique, acide lactique (L), glucose (β, cyclique) côte à côte, rotation commune ; compteurs d'atomes sous chaque molécule ; rapport C : H : O = 1 : 2 : 1 et formule empirique CH₂O ; formule brute et M ; mise en commun. Visionneuse : boules et bâtons, compact, formule plane animée, « Afficher les H » (un par un), étiquettes par atome. Coordonnées calculées par RDKit (`outils/molecules.py`) | Relecture de Roger (3 questions dans le panneau) ; doublets non liants (chapitre 5) |
 | Hydrate — l'eau dans le cristal (fiche F-E, chapitre 4.2) | brouillon | Question 1, zoom des cristaux bleus au motif (2 cm → 4 nm), exploration du motif (Cu²⁺, SO₄²⁻, 5 H₂O par unité), question 2, chauffage par paliers 5 → 3 → 1 → 0 (≈ 80, 120, 250 °C) avec équations, réhydratation, mise en commun ; tube à essai (couleur, flamme, buée, température) ; compteurs | Relecture de Roger (panneau « à contrôler ») |
 | NaCl — du grain de sel aux ions | brouillon | Temps 2 (refait le 16.11.2026, modèle de la diffusion) : question 2, eau autour du grain dès le départ, un Na⁺ puis un Cl⁻ se détachent et diffusent (échanges lents), le grain se dissout, solution (chaque ion avec 6 molécules d'eau), eau compacte et vraies tailles au temps 2, mise en commun, bécher, équation, δ+ δ− (avancé), suivre un ion. Temps 1 (accepté) : question 1, zoom texturé de 10 cm à 300 pm avec instruments, exploration du cristal (rotation, étiquettes, voisins, compteurs, tailles réelles, maille), zoom dans l'ion jusqu'au noyau (Bohr / nuage), capture sur fond blanc | Fichier HTML unique de repli ; relecture de Roger |
 
@@ -13,12 +14,12 @@ Mis à jour le 20 novembre 2026. Documents de référence (projet EPIC) : `monde
 
 1. **J1a — le zoom, seul (accepté).** C'est le point le plus risqué du projet : il est livré en premier. À relire : https://monde-microscopique.github.io/?brouillon#nacl
 2. J1b — la dissolution (temps 2) : première version le 16.11.2026 (refusée : « voyageurs dans un train ») ; refaite le même jour sur le modèle de la diffusion, puis retouchée (eau compacte, vraies tailles, 6 molécules par ion, étiquettes O et H), en relecture.
-3. **Chapitre 4 (rang 1 du protocole), dans l'ordre décidé par Roger le 18.11.2026 : F-E (hydrate, livrée le 18.11.2026), puis F-D, F-C, F-B**, avec la visionneuse de molécules (F-A).
+3. **Chapitre 4 (rang 1 du protocole), dans l'ordre décidé par Roger le 18.11.2026 : F-E (hydrate, livrée le 18.11.2026), F-D avec la visionneuse F-A (livrée le 20.11.2026), puis F-C, F-B.**
 4. J1c — finitions : niveau avancé, suivre une particule, fichier HTML unique de repli, réglages de fluidité sur téléphone réel.
 
 ## Contrôles automatiques
 
-À chaque envoi : 94 contrôles sans navigateur (dont 13 pour l'hydrate : motif, distances, conservation de l'eau, paliers, températures, trajets sans traversée) (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 71 contrôles dans Chrome (dont 16 pour l'hydrate, et la rotation pendant le zoom dans les deux scènes) (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
+À chaque envoi : 122 contrôles sans navigateur (dont 28 pour les molécules : formules et M comparées au polycopié, longueurs de liaison, rapport 1 : 2 : 1, rotation sans déformation ni miroir, formule plane, H un par un ; dont 13 pour l'hydrate : motif, distances, conservation de l'eau, paliers, températures, trajets sans traversée) (données de la fiche, réseau, convention de taille, échelle, continuité du zoom, zoom dans l'ion, maille, dissolution : conservation toutes les 0,5 s, eau intacte, 100 molécules au plus près du grain, orientation de l'eau, cortèges complets, échanges, ions qui partent entourés, cortèges complets dans la solution, aucune interpénétration, pas de retour dans le cristal, mouvement continu, même film à chaque chargement) et 81 contrôles dans Chrome (dont 10 pour la scène des molécules, 16 pour l'hydrate, et la rotation pendant le zoom dans les deux scènes) (critères d'acceptation 1 à 8 sur les 10 étapes, téléphone tactile, affichage 2D de secours, aucune ressource externe). Si un contrôle échoue, rien n'est publié.
 
 Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de gamme, confort au doigt, lisibilité en projection.
 
@@ -44,6 +45,8 @@ Non vérifiable automatiquement : fluidité sur un vrai téléphone d'entrée de
 - Échanges lents dans le cortège.
 
 ## Questions ouvertes pour Roger
+
+- Scène des molécules : acide lactique L ou sans chiralité ? glucose β ou α ? formule empirique affichée dès l'étape 4 (la scène sert après l'activité papier) ?
 
 - Isotope du chlore : ³⁵Cl repris de l'artefact de Roger (défi 2) ; à confirmer.
 - Retour sur le temps 1 : voir le panneau « À contrôler par Roger » et `docs/tester-une-scene.md`.

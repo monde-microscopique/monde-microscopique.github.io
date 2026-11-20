@@ -1,0 +1,86 @@
+{
+ "id": "formaldehyde",
+ "nom": "formaldéhyde",
+ "smiles": "C=O",
+ "remarque": "",
+ "formule": "CH2O",
+ "compte": {
+  "C": 1,
+  "O": 1,
+  "H": 2
+ },
+ "M": 30.03,
+ "stereo": {},
+ "atomes": [
+  {
+   "el": "C",
+   "charge": 0,
+   "pos": [
+    -1.2,
+    0.1,
+    0.0
+   ],
+   "plan": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "el": "O",
+   "charge": 0,
+   "pos": [
+    120.7,
+    -11.3,
+    -0.6
+   ],
+   "plan": [
+    86.6,
+    50.1
+   ]
+  },
+  {
+   "el": "H",
+   "charge": 0,
+   "pos": [
+    -68.4,
+    -87.2,
+    0.0
+   ],
+   "plan": [
+    -86.6,
+    49.9
+   ]
+  },
+  {
+   "el": "H",
+   "charge": 0,
+   "pos": [
+    -51.0,
+    98.4,
+    0.6
+   ],
+   "plan": [
+    0.1,
+    -100.0
+   ]
+  }
+ ],
+ "liaisons": [
+  [
+   0,
+   1,
+   2
+  ],
+  [
+   0,
+   2,
+   1
+  ],
+  [
+   0,
+   3,
+   1
+  ]
+ ],
+ "source": "coordonnées calculées par RDKit (ETKDG puis champ de force MMFF94, graine fixe) à partir de la notation SMILES ; formule plane : RDKit (CoordGen)"
+}

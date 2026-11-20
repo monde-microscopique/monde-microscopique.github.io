@@ -84,6 +84,14 @@ for (const s of catalogue.scenes) {
     erreurs.push(`${dossier}/donnees.json : fichier illisible (${e.message}).`);
   }
   verifierDonnees(donnees, `${dossier}/donnees.json`);
+  // Molécules utilisées par la scène : coordonnées calculées hors ligne (outils/molecules.py), dans molecules/.
+  if (Array.isArray(donnees.molecules)) {
+    donnees.bibliotheque = {};
+    for (const m of donnees.molecules) {
+      try { donnees.bibliotheque[m] = JSON.parse(lire(`molecules/${m}.json`)); }
+      catch (e) { erreurs.push(`${dossier}/donnees.json : molécule « ${m} » introuvable dans molecules/ (lancer python3 outils/molecules.py).`); }
+    }
+  }
   const textes = lireTextesSurs(`${dossier}/textes.md`);
   exiger(textes, SCENES[s.id].cles(donnees), `${dossier}/textes.md`);
   const controle = existsSync(join(RACINE, dossier, 'controle.md'))

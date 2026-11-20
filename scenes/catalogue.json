@@ -1,6 +1,11 @@
 {
   "scenes": [
     {
+      "id": "composition",
+      "chapitre": 4,
+      "statut": "brouillon"
+    },
+    {
       "id": "hydrate",
       "chapitre": 4,
       "statut": "brouillon"

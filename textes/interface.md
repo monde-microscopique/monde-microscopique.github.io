@@ -81,6 +81,18 @@ Avancé
 ## inter-delta
 δ+ δ−
 
+## inter-hydrogenes
+Afficher les H
+
+## inter-formule
+Formule brute
+
+## inter-compact
+Compact
+
+## inter-plane
+Formule plane
+
 ## compteur-cristal
 Encore dans le cristal
 
@@ -91,7 +103,7 @@ Charge totale
 vous êtes ici
 
 ## aide-clavier
-Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles, M maille, I zoom dans l'ion, A avancé, Q équation, D charges partielles.
+Clavier : ← → étapes, ↑ ↓ ou + − zoom, espace lecture, E étiquettes, V voisins, C compteurs, T tailles réelles, M maille, I zoom dans l'ion, A avancé, Q équation, D charges partielles, H afficher les H, F formule brute, K compact, P formule plane (selon la scène).
 
 ## webgl-absent
 La 3D est désactivée sur cet appareil : affichage simplifié en 2D.

@@ -12,6 +12,8 @@ import { norme, soustraire } from '../src/moteur/vec.js';
 import { positionsElectrons } from '../src/scenes/nacl/atome.js';
 import { planDissolution, etatDissolution, controler, positionIon, roleMolecule } from '../src/scenes/nacl/dissolution.js';
 import { genererMotif, bilanMotif } from '../src/scenes/hydrate/motif.js';
+import { SceneMolecules } from '../src/scenes/molecules/scene.js';
+import { orientationPrincipale, rapportSimple, formuleIndices, appliquer } from '../src/scenes/molecules/visionneuse.js';
 import { planChauffage, etatChauffage, controler as controlerChauffage, temperature } from '../src/scenes/hydrate/deshydratation.js';
 
 let echecs = 0, total = 0;
@@ -349,6 +351,74 @@ console.log('Hydrate (fiche F-E)');
     }
   }
   verifier('une molécule d\'eau qui part ou arrive ne traverse aucun autre atome (> 180 pm)', passe > 180, `${passe.toFixed(0)} pm`);
+}
+
+{
+  console.log('Molécules (fiches F-A et F-D)');
+  const sources = JSON.parse(readFileSync(join(RACINE, 'molecules/sources.json'), 'utf8'));
+  const dc = JSON.parse(readFileSync(join(RACINE, 'scenes/composition/donnees.json'), 'utf8'));
+  dc.bibliotheque = {};
+  for (const id of dc.molecules) dc.bibliotheque[id] = JSON.parse(readFileSync(join(RACINE, `molecules/${id}.json`), 'utf8'));
+  const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  // Longueurs de liaison attendues (pm), avec une tolérance : contrôle que le calcul hors ligne est sain
+  // (C–O : environ 135 pm dans un groupe carboxyle, 143 pm dans un alcool).
+  const attendu = { 'C-H': [105, 112], 'C-C': [148, 156], 'C-O': [132, 146], 'C=O': [118, 124], 'H-O': [94, 99] };
+  for (const id of dc.molecules) {
+    const m = dc.bibliotheque[id];
+    const src = sources.molecules ? sources.molecules.find((x) => x.id === id) : sources[id];
+    verifier(`${id} : formule ${m.formule} et M = ${m.M} g/mol comme le polycopié`, src && m.formule === src.formule_attendue && Math.abs(m.M - src.M_attendue) < 0.06);
+    const compte = {};
+    for (const a of m.atomes) compte[a.el] = (compte[a.el] || 0) + 1;
+    verifier(`${id} : le compte d'atomes correspond aux coordonnées`, JSON.stringify(Object.keys(compte).sort().map((k) => [k, compte[k]])) === JSON.stringify(Object.keys(m.compte).sort().map((k) => [k, m.compte[k]])));
+    let horsBornes = [];
+    for (const [i, j, o] of m.liaisons) {
+      const els = [m.atomes[i].el, m.atomes[j].el].sort().join(o === 2 ? '=' : '-');
+      const L = d3(m.atomes[i].pos, m.atomes[j].pos);
+      const b = attendu[els];
+      if (!b || L < b[0] || L > b[1]) horsBornes.push(`${els} ${L.toFixed(0)}`);
+    }
+    verifier(`${id} : longueurs de liaison plausibles`, horsBornes.length === 0, horsBornes.join(', '));
+    const r = rapportSimple(m.compte);
+    verifier(`${id} : rapport le plus simple C : H : O = 1 : 2 : 1`, r.elements.join() === 'C,H,O' && r.valeurs.join() === '1,2,1', `${r.elements} ${r.valeurs}`);
+  }
+  verifier('formule brute écrite avec des indices', formuleIndices('C6H12O6') === 'C₆H₁₂O₆');
+  const R = orientationPrincipale(dc.bibliotheque.glucose.atomes.map((a) => a.pos));
+  const det = R[0] * (R[4] * R[8] - R[5] * R[7]) - R[1] * (R[3] * R[8] - R[5] * R[6]) + R[2] * (R[3] * R[7] - R[4] * R[6]);
+  verifier('orientation de départ : rotation propre (pas de miroir, qui changerait l\'acide lactique L en D)', Math.abs(det - 1) < 1e-6, det);
+
+  const sc = new SceneMolecules(dc, null, null, null);
+  sc.ecran = { l: 1280, h: 760 };
+  const longueurs = () => sc.mols.flatMap((m) => m.liaisons.map(([i, j]) => d3(m.pos[i], m.pos[j])));
+  sc.majPositions();
+  const L0 = longueurs();
+  sc.allerEtape(1);
+  sc.tourner(140, -60);
+  const L1 = longueurs();
+  verifier('la rotation ne déforme pas les molécules', L0.every((x, k) => Math.abs(x - L1[k]) < 0.01));
+  const centres = sc.mols.map((m) => m.centre[0]);
+  verifier('quatre molécules côte à côte, sans se chevaucher', centres.every((x, k) => k === 0 || x - centres[k - 1] > sc.mols[k].rayon + sc.mols[k - 1].rayon - 1));
+  sc.ecran = { l: 390, h: 844 };
+  sc.majPositions();
+  verifier('sur un écran étroit : deux colonnes', Math.abs(sc.mols[0].centre[1] - sc.mols[1].centre[1]) < 1 && sc.mols[2].centre[1] < sc.mols[0].centre[1]);
+  sc.ecran = { l: 1280, h: 760 };
+  sc.allerEtape(2);
+  verifier('l\'étape « compter » allume les compteurs', sc.etat.inter.compteurs && !sc.etat.inter.formule);
+  sc.allerEtape(1);
+  verifier('revenir en arrière éteint les compteurs imposés', !sc.etat.inter.compteurs);
+  sc.basculer('plane');
+  for (let k = 0; k < 40; k++) sc.avancer(0.05);
+  verifier('formule plane : tous les atomes dans le plan de l\'écran', sc.mols.every((m) => m.pos.every((p) => Math.abs(p[2]) < 1e-6)));
+  verifier('formule plane : pas de rotation possible', !sc.rotationPermise);
+  sc.basculer('compact');
+  verifier('compact et formule plane s\'excluent', sc.etat.inter.compact && !sc.etat.inter.plane);
+  sc.basculer('hydrogenes');
+  verifier('H masqués', sc.fonduH(sc.mols[0].debut + sc.mols[0].atomes.findIndex((a) => a.el === 'H')) === 1);
+  sc.basculer('hydrogenes');
+  const iH = sc.mols[3].debut + sc.mols[3].atomes.map((a, i) => [a.el, i]).filter(([e]) => e === 'H').pop()[1];
+  sc.avancer(0.5);
+  const enCours = sc.fonduH(iH);
+  for (let k = 0; k < 120; k++) sc.avancer(0.05);
+  verifier('les H apparaissent un par un (le dernier H du glucose est encore caché après 0,5 s, visible à la fin)', enCours === 1 && sc.fonduH(iH) === 0, `${enCours} ${sc.fonduH(iH)}`);
 }
 
 console.log('Textes');

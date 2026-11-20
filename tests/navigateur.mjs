@@ -38,7 +38,7 @@ try {
   await page.goto(url + '?brouillon');
   await page.reload();
   await attendre(page);
-  verifier('mode brouillon : les 2 scènes sont listées', (await page.locator('.carte-scene').count()) === 2);
+  verifier('mode brouillon : les 3 scènes sont listées', (await page.locator('.carte-scene').count()) === 3);
 
   console.log('Scène NaCl, temps 1 (WebGL)');
   await page.goto(url + '?brouillon#nacl');
@@ -380,6 +380,60 @@ try {
     return n;
   });
   verifier('hydrate, mode 2D : le motif est dessiné', pixH > 100, String(pixH));
+  await page.context().close();
+
+  console.log('Scène « Même composition, substances différentes » (fiches F-D et F-A)');
+  page = await nouvellePage();
+  await page.goto(url + '?brouillon#composition');
+  await page.reload();
+  await attendre(page);
+  const etatC = () => page.evaluate(() => {
+    const s = window.__monde.scene;
+    return { etape: s.etape.id, inter: { ...s.etat.inter }, plan: s.etat.plan, rotation: s.etat.rotation.slice(), fige: s.fige };
+  });
+  verifier('composition : la scène commence par la question, figée', (await etatC()).etape === 'question-1' && await page.locator('.question').isVisible());
+  const interC = await page.locator('.inter:not([hidden])').count();
+  verifier('composition : 6 interrupteurs (étiquettes, compteurs, afficher les H, formule brute, compact, formule plane)', interC === 6, String(interC));
+  await page.locator('.question button').click();
+  verifier('composition : étape « quatre molécules »', (await etatC()).etape === 'modeles');
+  const r0 = (await etatC()).rotation;
+  await page.mouse.move(640, 420); await page.mouse.down(); await page.mouse.move(760, 460, { steps: 6 }); await page.mouse.up();
+  const r1 = (await etatC()).rotation;
+  verifier('composition : glisser fait tourner les molécules', r0.some((x, k) => Math.abs(x - r1[k]) > 0.05), JSON.stringify(r1.map((x) => x.toFixed(2))));
+  await page.locator('.pastille').nth(2).click();
+  const eC = await etatC();
+  verifier('composition : « compter » allume les compteurs, écrits sous les molécules (pas de boîte)', eC.inter.compteurs && await page.locator('.compteurs').isHidden(), JSON.stringify(eC.inter));
+  const nC = await page.evaluate(() => window.__monde.scene.etapes.length);
+  for (let i = 0; i < nC; i++) {
+    await page.evaluate((i) => { window.__monde.scene.allerEtape(i); }, i);
+    for (const k of ['e', 'c', 'h', 'f', 'k', 'p']) { await page.keyboard.press(k); await page.waitForTimeout(30); await page.keyboard.press(k); }
+    await page.waitForTimeout(40);
+  }
+  verifier(`composition : les interrupteurs fonctionnent aux ${nC} étapes`, erreurs.length === 0, erreurs.join(' | '));
+  await page.locator('.pastille').nth(4).click();
+  await page.keyboard.press('p');
+  await page.waitForTimeout(1300);
+  const pl = await etatC();
+  const opaciteGl = await page.locator('.couche-gl').evaluate((c) => c.style.opacity);
+  verifier('composition : formule plane (les boules laissent place aux symboles)', pl.plan === 1 && opaciteGl === '0', JSON.stringify({ plan: pl.plan, opaciteGl }));
+  await page.keyboard.press('p');
+  await page.waitForTimeout(1300);
+  verifier('composition : retour au modèle 3D', (await etatC()).plan === 0);
+  await page.locator('.pastille').nth(nC - 1).click();
+  const finC = await page.locator('.question').innerText();
+  verifier('composition : mise en commun affichée, sans « null »', /suffit-elle à identifier/.test(finC) && !finC.includes('null'), finC.slice(0, 60));
+  await page.goto(url + '?brouillon&2d#composition/compter');
+  await page.reload();
+  await attendre(page);
+  await page.waitForTimeout(300);
+  const pixC = await page.evaluate(() => {
+    const c = document.querySelector('.couche-gl');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 0) n++;
+    return n;
+  });
+  verifier('composition, mode 2D : les molécules sont dessinées', pixC > 100, String(pixC));
   await page.context().close();
 
   // Critère 6 : au doigt (écran tactile de téléphone).

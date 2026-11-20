@@ -32,4 +32,11 @@ export const SCENES = {
       ...(d.etapes || []).filter((e) => e.equation).map((e) => e.equation),
     ])],
   },
+  composition: {
+    cles: (d) => [...new Set([
+      'titre', 'sous-titre', 'simplifications', 'instrument-modele', 'formule-empirique',
+      ...(d.molecules || []).map((m) => `nom-${m}`),
+      ...clesReferencees(d.etapes || []),
+    ])],
+  },
 };

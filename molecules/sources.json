@@ -1,0 +1,7 @@
+{
+ "_lisez-moi": "Molécules du site. Les coordonnées sont calculées par outils/molecules.py (RDKit) à partir de la notation SMILES, jamais écrites à la main. Après une modification ici : python3 outils/molecules.py, puis vérifier et publier.",
+ "formaldehyde": {"nom": "formaldéhyde", "smiles": "C=O", "formule_attendue": "CH2O", "M_attendue": 30.03},
+ "acide-acetique": {"nom": "acide acétique", "smiles": "CC(=O)O", "formule_attendue": "C2H4O2", "M_attendue": 60.05},
+ "acide-lactique": {"nom": "acide lactique", "smiles": "C[C@H](O)C(=O)O", "formule_attendue": "C3H6O3", "M_attendue": 90.08, "remarque": "forme L, (S), celle des muscles et du yogourt"},
+ "glucose": {"nom": "glucose", "smiles": "OC[C@H]1O[C@@H](O)[C@H](O)[C@@H](O)[C@@H]1O", "formule_attendue": "C6H12O6", "M_attendue": 180.2, "remarque": "β-D-glucopyranose (forme cyclique la plus abondante dans l'eau), une seule forme montrée"}
+}
